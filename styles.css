@@ -1,0 +1,54 @@
+.container {
+    display: flex;
+    justify-content: space-between; /* один слева, другой справа */
+    align-items: center;
+    position: relative;
+
+}
+.div-left, .div-right {
+    display: flex;
+    flex-direction: column; /* вертикальное расположение */
+    justify-content: center; /* вертикальное выравнивание */
+    align-items: center; /* горизонтальное выравнивание */
+    gap: 15px; /* расстояние между элементами */
+    padding: 20px;
+}
+.div-left {
+    width: 240px;
+    height: 300px;
+    background: lightblue;
+    position: absolute;
+    right: 700px;
+    top: 50%;
+    transform: translateY(100%);
+}
+
+.div-right {
+    width: 240px;
+    height: 300px;
+    background: lightcoral;
+    position: absolute;
+    right: 400px;
+    top: 50%;
+    transform: translateY(100%);
+}
+input, button {
+    width: 170px; /* ширина элементов */
+    padding: 5px;
+    border: 1px solid #ccc;
+    border-radius: 14px;
+    font-size: 14px;
+}
+
+button {
+    background: #007bff;
+    color: white;
+    border: none;
+    cursor: pointer;
+    transition: background 0.3s;
+}
+
+button:hover {
+    background: #0056b3;
+}
+
