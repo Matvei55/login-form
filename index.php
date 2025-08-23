@@ -7,7 +7,7 @@
 </head>
 <body>
     <div class="container">
-    <form method="post" action="index.php" novalidate>
+    <form method="post" action="handlerLogin.php" novalidate>
         <div class="div-left">
         <h1>Login</h1>
         <label>Введите свое имя:</label>
@@ -16,7 +16,7 @@
         <label>Введите пароль:</label>
         <input type="password" name="password" required>
 
-        <input type="submit" name="loginSubmit" value="войти">
+        <button type="submit" name="loginSubmit">войти</button>
         </div>
     </form>
     <form method="post" action="handlerRegister.php" novalidate>
@@ -28,7 +28,7 @@
             <label>Придумайте пароль</label>
             <input type="password" name="password" required>
 
-            <input type="submit" name="registerSubmit" value="зарегестрироваться">
+            <button type="submit" name="registerSubmit" >зарегестрироваться</button>
         </div>
     </div>
     </form>

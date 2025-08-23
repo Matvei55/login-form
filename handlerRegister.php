@@ -1,9 +1,91 @@
 <?php
-if (isset($_POST['registerSubmit'])) {
-    if (isset($_POST['username']) && isset($_POST['password'])) {
-        $username = $_POST['username'];
-        $password = $_POST['password'];
+
+class RegistrationValidator
+{
+    private $username;
+    private $password;
+
+    public function __construct($username, $password)
+    {
+        $this->username = trim($username);
+        $this->password = trim($password);
+    }
+
+    public function validate()
+    {
+        $errors = [];
+
+        if (!$this->validateUsername()) {
+            $errors[] = "Имя пользователя должно содержать только латинские буквы, цифры, дефисы и подчеркивания";
+        }
+
+        if (!$this->validatePassword()) {
+            $errors[] = "Пароль должен содержать только латинские буквы, цифры, дефисы и подчеркивания";
+        }
+
+        if (strlen($this->username) < 3) {
+            $errors[] = "Имя пользователя должно быть не менее 3 символов";
+        }
+
+        if (strlen($this->password) < 6) {
+            $errors[] = "Пароль должен быть не менее 6 символов";
+        }
+
+        return empty($errors) ? true : $errors;
+    }
+
+    private function validateUsername()
+    {
+        // Должно возвращать TRUE если валидно, FALSE если невалидно
+        return preg_match("/^[a-zA-Z0-9_-]+$/", $this->username);
+    }
+
+    private function validatePassword()
+    {
+        // Должно возвращать TRUE если валидно, FALSE если невалидно
+        return preg_match("/^[a-zA-Z0-9_-]+$/", $this->password);
+    }
+
+    public function getUsername()
+    {
+        return $this->username;
+    }
+
+    public function getPassword()
+    {
+        return $this->password;
+
     }
 }
 
-echo 1312312;
+if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+    $username = isset($_POST['username']) ? trim($_POST['username']) : '';
+    $password = isset($_POST['password']) ? trim($_POST['password']) : '';
+
+
+    $validator = new RegistrationValidator($username, $password);
+
+
+    $result = $validator->validate();
+
+
+    if ($result === true) {
+        echo "Регистрация успешна!<br>";
+        echo "Имя пользователя: " . htmlspecialchars($validator->getUsername()) . "<br>";
+
+
+    } else {
+        echo "Ошибки валидации:<br>";
+        foreach ($result as $error) {
+            echo "- " . htmlspecialchars($error) . "<br>";
+        }
+    }
+$userManager = new Registration();
+$userManager->saveUser($username, $password);
+
+
+}
+
+
+
+
