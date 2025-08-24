@@ -1,5 +1,5 @@
 <?php
-
+require_once "auth.php";
 class RegistrationValidator
 {
     private $username;
@@ -11,7 +11,7 @@ class RegistrationValidator
         $this->password = trim($password);
     }
 
-    public function validate()
+    public function validateRegistration()
     {
         $errors = [];
 
@@ -57,35 +57,33 @@ class RegistrationValidator
 
     }
 }
-
+//--------------------------------------------------------------------
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $username = isset($_POST['username']) ? trim($_POST['username']) : '';
     $password = isset($_POST['password']) ? trim($_POST['password']) : '';
 
-
     $validator = new RegistrationValidator($username, $password);
-
-
-    $result = $validator->validate();
-
+    $result = $validator->validateRegistration();
 
     if ($result === true) {
-        echo "Регистрация успешна!<br>";
-        echo "Имя пользователя: " . htmlspecialchars($validator->getUsername()) . "<br>";
+        $userManager = new Registration();
+        $saveResult = $userManager->saveUser($username, $password);
 
-
+        if ($saveResult) {
+            echo "Регистрация успешна! Имя пользователя: " . htmlspecialchars($username) . "<br>";
+        } else {
+            // ✅ Используем метод для получения сообщения об ошибке
+            $errorMessage = $userManager->getErrorMessage($username, $password);
+            echo "Ошибка при сохранении: " . htmlspecialchars($errorMessage) . "<br>";
+        }
     } else {
         echo "Ошибки валидации:<br>";
         foreach ($result as $error) {
             echo "- " . htmlspecialchars($error) . "<br>";
         }
     }
-$userManager = new Registration();
-$userManager->saveUser($username, $password);
-
-
 }
-
+//-----------------------------------------------------------------
 
 
 

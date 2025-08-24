@@ -7,18 +7,14 @@ class handlerLogin
 
     public function __construct($username, $password)
     {
-
         $this->username = $username !== null ? trim($username) : '';
         $this->password = $password !== null ? ($password) : '';
-
-
         $this->credentialFile = $_SERVER['DOCUMENT_ROOT'] . '/creds.txt';
     }
 
     public function validate()
     {
         $errors = [];
-
 
         if (!file_exists($this->credentialFile)) {
             $errors[] = "Файл с учетными данными не найден";
@@ -44,8 +40,8 @@ class handlerLogin
         if ($handle) {
             while (($line = fgets($handle)) !== false) {
                 $line = trim($line);
-                // Используем пробел как разделитель
-                $parts = explode(" ", $line, 2);
+                // Используем двоеточие как разделитель
+                $parts = explode(":", $line, 2);
                 if (count($parts) === 2) {
                     $fileUsername = trim($parts[0]);
                     if ($fileUsername === $this->username) {
@@ -69,7 +65,8 @@ class handlerLogin
         if ($handle) {
             while (($line = fgets($handle)) !== false) {
                 $line = trim($line);
-                $parts = explode(" ", $line, 2);
+                // Используем двоеточие как разделитель
+                $parts = explode(":", $line, 2);
                 if (count($parts) === 2) {
                     $fileUsername = trim($parts[0]);
                     $filePassword = trim($parts[1]);
@@ -84,28 +81,46 @@ class handlerLogin
         return false;
     }
 }
-$checkFile = $_SERVER['DOCUMENT_ROOT'] . '/creds.txt';
-if (!file_exists($checkFile)) {
-    die("ОШИБКА: Файл не найден: " . $checkFile .
-        "<br>Проверьте путь и права доступа");
-}
-
+//-----------------------------------------------------------
+// ПЕРЕМЕЩАЕМ проверку файла ВНУТРЬ обработки логина
+// Не проверяем файл заранее, так как при регистрации его может не быть
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-    $username = $_POST['username'] ? $_POST[ 'username'] : '';
-    $password = $_POST['password'] ? $_POST[ 'password' ] : '';
+    $username = isset($_POST['username']) ? trim($_POST['username']) : '';
+    $password = isset($_POST['password']) ? trim($_POST['password']) : '';
 
-    $loginHandler = new handlerLogin($username, $password);
-    $result = $loginHandler->validate();
+    // Определяем, это регистрация или вход (например, по наличию кнопки)
+    $isRegistration = isset($_POST['register']);
 
-    // Обработка результата
-    if ($result === true) {
-        echo "Успешный вход! Добро пожаловать, " . htmlspecialchars($username);
+    if ($isRegistration) {
+        // Обработка регистрации
+        $registration = new Registration();
+        if ($registration->saveUser($username, $password)) {
+            echo "Регистрация успешна!";
+        } else {
+            echo $registration->getErrorMessage($username, $password);
+        }
     } else {
-        echo "Ошибки:<br>";
-        foreach ($result as $error) {
-            echo "- " . htmlspecialchars($error) . "<br>";
+        // Обработка входа - ТОЛЬКО здесь проверяем файл
+        $checkFile = $_SERVER['DOCUMENT_ROOT'] . '/creds.txt';
+        if (!file_exists($checkFile)) {
+            echo "ОШИБКА: Файл с учетными данными не найден<br>";
+            echo "Возможно, вы еще не зарегистрированы";
+            exit;
+        }
+
+        $loginHandler = new handlerLogin($username, $password);
+        $result = $loginHandler->validate();
+
+        if ($result === true) {
+            echo "Успешный вход! Добро пожаловать, " . htmlspecialchars($username);
+        } else {
+            echo "Ошибки:<br>";
+            foreach ($result as $error) {
+                echo "- " . htmlspecialchars($error) . "<br>";
+            }
         }
     }
 }
+//----------------------------------------------------------
 
