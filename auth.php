@@ -1,5 +1,4 @@
 <?php
-require_once "handlerLogin.php";
 require_once "handlerRegister.php";
 
 class Registration
@@ -61,14 +60,4 @@ class Registration
         return "Неизвестная ошибка при регистрации";
     }
 }
-//class Registration
-//{
-//    private $filename = '/var/www/html/creds.txt';
-//
-//    public function saveUser($username, $password)
-//    {
-//        $data = trim($username) . ' ' . trim($password) . PHP_EOL;
-//        return file_put_contents($this->filename, $data, FILE_APPEND) !== false;
-//    }
-//}
 
