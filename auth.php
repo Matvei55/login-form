@@ -1,5 +1,4 @@
 <?php
-require_once "handlerRegister.php";
 
 class Registration
 {

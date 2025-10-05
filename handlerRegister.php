@@ -1,5 +1,5 @@
 <?php
-require_once "auth.php";
+
 class RegistrationValidator
 {
     private $username;
