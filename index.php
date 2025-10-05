@@ -50,18 +50,18 @@
 //    default:
 //        echo "Страница не найдена";
 //}
-
+session_start();
 require "render.php";
 require "handlerRegister.php";
 require "auth.php";
-
+require "handlerLogin.php";
 $render = new Render();
 $page = $_GET['page'] ?? 'form';
 
 switch ($page) {
-    case 'form':
+    case 'form';
         if (!empty($_POST)) {
-            $render->render('form/form', $_POST);
+            $render->render('form', $_POST);
         } else {
 
             echo $render->render('form');
@@ -69,10 +69,18 @@ switch ($page) {
         break;
 
     case 'registerSubmit':
+        $validator = new RegistrationValidator($_POST['username'], $_POST['password'] );
+        $errors = $validator->validateRegistration();
+        $_SESSION['errors'] = $errors; ;
         $r = new Registration();
-        $result = $r->saveUser($_POST['username'] ?? '', $_POST['password'] ?? '');
-        var_dump($result);die;
-        $render->render("templateName", $result);
+        $result = $r->saveUser($_POST['username'] , $_POST['password'] );
+        header('Location: http://localhost:81/?page=form');
+        exit;
+
+    case 'loginSubmit':
+        $valid = new handlerLogin($_POST['username'], $_POST['password']);
+        $error = $valid->validate();
+        $_SESSION['error'] = $error;
         header('Location: http://localhost:81/?page=form');
         exit;
 

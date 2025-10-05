@@ -1,5 +1,10 @@
+<?php
+//if (isset($_SESSION['errors'])){
+//    ($_SESSION['errors']);
+//}
+//?>
 <div class="container">
-    <form method="post" action="../handlerLogin.php" novalidate>
+    <form method="post" action="http://localhost:81/index.php/?page=loginSubmit" novalidate>
         <div class="div-left">
             <h1>Login</h1>
             <label>Введите свое имя:</label>
@@ -9,6 +14,11 @@
             <input type="password" name="password" required>
 
             <button type="submit" name="loginSubmit">войти</button>
+            <div>
+                <ul><?php foreach ($_SESSION['error'] as $value) {
+                        echo "<li>$value</li>";
+                    } ?></ul>
+            </div>
         </div>
     </form>
 
@@ -23,6 +33,11 @@
             <input type="password" name="password" required>
 
             <button type="submit" name="registerSubmit" >зарегестрироваться</button>
+            <div>
+                <ul><?php foreach ($_SESSION['errors'] as $value) {
+                        echo "<li>$value</li>";
+                    } ?></ul>
+            </div>
         </div>
     </form>
 </div>

@@ -11,27 +11,28 @@ class RegistrationValidator
         $this->password = trim($password);
     }
 
-    public function validateRegistration()
+    public function validateRegistration():array
     {
-        $errors = [];
+        $errorsRegister = [];
 
         if (!$this->validateUsername()) {
-            $errors[] = "Имя пользователя должно содержать только латинские буквы, цифры, дефисы и подчеркивания";
+            $errorsRegister[] = "Имя пользователя должно содержать только латинские буквы, цифры, дефисы и подчеркивания";
         }
 
         if (!$this->validatePassword()) {
-            $errors[] = "Пароль должен содержать только латинские буквы, цифры, дефисы и подчеркивания";
+            $errorsRegister[] = "Пароль должен содержать только латинские буквы, цифры, дефисы и подчеркивания";
         }
 
         if (strlen($this->username) < 3) {
-            $errors[] = "Имя пользователя должно быть не менее 3 символов";
+            $errorsRegister[] = "Имя пользователя должно быть не менее 3 символов";
         }
 
         if (strlen($this->password) < 6) {
-            $errors[] = "Пароль должен быть не менее 6 символов";
+            $errorsRegister[] = "Пароль должен быть не менее 6 символов";
         }
 
-        return empty($errors) ? true : $errors;
+//
+        return $errorsRegister;
     }
 
     private function validateUsername()
