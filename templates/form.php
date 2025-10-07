@@ -1,9 +1,4 @@
-<?php
-//if (isset($_SESSION['errors'])){
-//    ($_SESSION['errors']);
-//}
-//?>
-<div class="container">
+<div class="flex-container">
     <form method="post" action="http://localhost:81/index.php/?page=loginSubmit" novalidate>
         <div class="div-left">
             <h1>Login</h1>

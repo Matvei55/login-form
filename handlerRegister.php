@@ -16,11 +16,11 @@ class RegistrationValidator
         $errorsRegister = [];
 
         if (!$this->validateUsername()) {
-            $errorsRegister[] = "Имя пользователя должно содержать только латинские буквы, цифры, дефисы и подчеркивания";
+            $errorsRegister[] = "Имя пользователя должно содержать только  буквы, цифры, дефисы и подчеркивания";
         }
 
         if (!$this->validatePassword()) {
-            $errorsRegister[] = "Пароль должен содержать только латинские буквы, цифры, дефисы и подчеркивания";
+            $errorsRegister[] = "Пароль должен содержать только  буквы, цифры, дефисы и подчеркивания";
         }
 
         if (strlen($this->username) < 3) {
@@ -38,13 +38,13 @@ class RegistrationValidator
     private function validateUsername()
     {
         // Должно возвращать TRUE если валидно, FALSE если невалидно
-        return preg_match("/^[a-zA-Z0-9_-]+$/", $this->username);
+        return preg_match("/^[a-zA-Zа-яА-ЯёЁ0-9_-]+$/u", $this->username);
     }
 
     private function validatePassword()
     {
         // Должно возвращать TRUE если валидно, FALSE если невалидно
-        return preg_match("/^[a-zA-Z0-9_-]+$/", $this->password);
+        return preg_match("/^[a-zA-Zа-яА-ЯёЁ0-9_-]+$/u", $this->username);
     }
 
     public function getUsername()
