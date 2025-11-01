@@ -10,13 +10,16 @@
 
             <button type="submit" name="loginSubmit">войти</button>
             <div>
-                <ul><?php foreach ($_SESSION['error'] as $value) {
-                        echo "<li>$value</li>";
-                    } ?></ul>
+                <ul>
+                    <?php if (!empty($error)): ?>
+                        <?php foreach ($error as $value): ?>
+                            <li><?= htmlspecialchars($value) ?></li>
+                        <?php endforeach; ?>
+                    <?php endif; ?>
+                </ul>
             </div>
         </div>
     </form>
-
 
     <form method="post" action="http://localhost:81/index.php/?page=registerSubmit" novalidate>
         <div class="div-right">
@@ -27,11 +30,15 @@
             <label>Придумайте пароль</label>
             <input type="password" name="password" required>
 
-            <button type="submit" name="registerSubmit" >зарегестрироваться</button>
+            <button type="submit" name="registerSubmit">зарегестрироваться</button>
             <div>
-                <ul><?php foreach ($_SESSION['errors'] as $value) {
-                        echo "<li>$value</li>";
-                    } ?></ul>
+                <ul>
+                    <?php if (!empty($errors)): ?>
+                        <?php foreach ($errors as $value): ?>
+                            <li><?= htmlspecialchars($value) ?></li>
+                        <?php endforeach; ?>
+                    <?php endif; ?>
+                </ul>
             </div>
         </div>
     </form>

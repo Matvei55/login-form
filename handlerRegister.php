@@ -1,91 +1,34 @@
 <?php
+require_once 'database.php';
 
-class RegistrationValidator
-{
-    private $username;
-    private $password;
+try {
+    $pdo = getPDO();
+    $pdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
 
-    public function __construct($username, $password)
-    {
-        $this->username = trim($username);
-        $this->password = trim($password);
-    }
+    if ($_POST['username'] && $_POST['password']) {
+        $username = trim($_POST['username']);
+        $password = $_POST['password'];
 
-    public function validateRegistration():array
-    {
-        $errorsRegister = [];
+        $stmt = $pdo->prepare("SELECT id FROM users WHERE username = ?");
+        $stmt->execute([$username]);
 
-        if (!$this->validateUsername()) {
-            $errorsRegister[] = "Имя пользователя должно содержать только  буквы, цифры, дефисы и подчеркивания";
+        if ($stmt->fetch()) {
+            $_SESSION['errors'] = ["Пользователь '$username' уже существует"];
+        } else {
+            $password_hash = password_hash($password, PASSWORD_DEFAULT);
+            $stmt = $pdo->prepare("INSERT INTO users (username, password) VALUES (?, ?)");
+
+            if ($stmt->execute([$username, $password_hash])) {
+                $_SESSION['success'] = "Пользователь '$username' зарегистрирован";
+            } else {
+                $_SESSION['errors'] = ["Не удалось зарегистрировать пользователя"];
+            }
         }
-
-        if (!$this->validatePassword()) {
-            $errorsRegister[] = "Пароль должен содержать только  буквы, цифры, дефисы и подчеркивания";
-        }
-
-        if (strlen($this->username) < 3) {
-            $errorsRegister[] = "Имя пользователя должно быть не менее 3 символов";
-        }
-
-        if (strlen($this->password) < 6) {
-            $errorsRegister[] = "Пароль должен быть не менее 6 символов";
-        }
-
-//
-        return $errorsRegister;
+    } else {
+        $_SESSION['errors'] = ['Заполните все поля'];
     }
-
-    private function validateUsername()
-    {
-        // Должно возвращать TRUE если валидно, FALSE если невалидно
-        return preg_match("/^[a-zA-Zа-яА-ЯёЁ0-9_-]+$/u", $this->username);
-    }
-
-    private function validatePassword()
-    {
-        // Должно возвращать TRUE если валидно, FALSE если невалидно
-        return preg_match("/^[a-zA-Zа-яА-ЯёЁ0-9_-]+$/u", $this->username);
-    }
-
-    public function getUsername()
-    {
-        return $this->username;
-    }
-
-    public function getPassword()
-    {
-        return $this->password;
-
-    }
+} catch (PDOException $e) {
+    $_SESSION['errors'] = ["Ошибка базы данных: " . $e->getMessage()];
 }
-//--------------------------------------------------------------------
-//if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-//    $username = isset($_POST['username']) ? trim($_POST['username']) : '';
-//    $password = isset($_POST['password']) ? trim($_POST['password']) : '';
-//
-//    $validator = new RegistrationValidator($username, $password);
-//    $result = $validator->validateRegistration();
-//
-//    if ($result === true) {
-//        $userManager = new Registration();
-//        $saveResult = $userManager->saveUser($username, $password);
-//
-//        if ($saveResult) {
-//            echo "Регистрация успешна! Имя пользователя: " . htmlspecialchars($username) . "<br>";
-//        } else {
-//            // ✅ Используем метод для получения сообщения об ошибке
-//            $errorMessage = $userManager->getErrorMessage($username, $password);
-//            echo "Ошибка при сохранении: " . htmlspecialchars($errorMessage) . "<br>";
-//        }
-//    } else {
-//        echo "Ошибки валидации:<br>";
-//        foreach ($result as $error) {
-//            echo "- " . htmlspecialchars($error) . "<br>";
-//        }
-//    }
-//}
-//-----------------------------------------------------------------хз говорю
-
-
 
 
