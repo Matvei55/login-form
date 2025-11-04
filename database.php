@@ -1,7 +1,7 @@
 <?php
 function  getPDO()
 {
-    $host = 'localhost';
+    $host = 'mysql';
     $dbname = 'db';  // Используем 'db' из MYSQL_DATABASE
     $username = 'user';  // Используем 'user' из MYSQL_USER
     $password = 'password';  // Используем 'password' из MYSQL_PASSWORD
