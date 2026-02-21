@@ -1,5 +1,5 @@
 <?php
-require_once 'database.php';
+use Base\Database;
 class handlerLogin{
     private $db;
     public function __construct(){

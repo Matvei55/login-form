@@ -1,4 +1,5 @@
 <?php
+namespace Ren;
 class Render{
     private $templatePath;
 

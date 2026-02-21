@@ -1,8 +1,7 @@
 <?php
 require_once 'autolouder.php';
 session_start();
-require_once 'database.php';
-require_once 'render.php';
+use Ren\Render;
 
 if ($_SERVER["REQUEST_METHOD"] === "POST") {
     $page = $_GET["page"] ?? '';

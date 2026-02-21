@@ -1,5 +1,5 @@
 <?php
-require_once 'database.php';
+use Base\Database;
 
 class HandlerRegister {
     private $db;

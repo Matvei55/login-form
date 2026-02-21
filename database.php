@@ -1,4 +1,5 @@
 <?php
+namespace Base;
 class Database {
     private $host = "mysql";
     private $dbname = "db";
