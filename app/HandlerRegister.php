@@ -1,12 +1,13 @@
 <?php
 namespace Ren;
 use PDOException;
+use Ren\Database;
 class HandlerRegister {
     private $db;
 
     public function __construct() {
         // Создаем Database внутри класса
-        $this->db = new Database();
+        $this->db = Database::getInstance();
     }
 
     public function processRegistration() {

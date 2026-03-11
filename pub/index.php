@@ -1,5 +1,5 @@
 <?php
-require __DIR__ . '/../app/autoloader.php';
+require __DIR__ . '/../app/Autolouder.php';
 session_start();
 use Ren\Render;
 
@@ -8,11 +8,11 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
 
     switch ($page) {
         case 'registerSubmit':
-            require 'handlerRegister.php';
+            require __DIR__ .  '/../app/HandlerRegister.php';
             break;
 
         case 'loginSubmit':
-            require 'handlerLogin.php';
+            require __DIR__ . '/../app/HandlerLogin.php';
             break;
     }
 
