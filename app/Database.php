@@ -8,7 +8,7 @@ class Database {
     private static $instance = null;
 
     private $host = 'mysql';
-    private $dbname = 'db';
+    private $dbname = 'users';
     private $username = 'user';
     private $password = 'password';
     private $pdo;
