@@ -1,5 +1,5 @@
 <?php
-namespace Ren;
+namespace app;
 
 use PDO;
 use PDOException;

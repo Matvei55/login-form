@@ -1,14 +1,14 @@
 <?php
 require __DIR__ . '/../app/Autolouder.php';
 session_start();
-use Ren\Render;
+use app\Render;
 
 if ($_SERVER["REQUEST_METHOD"] === "POST") {
     $page = $_GET["page"] ?? '';
 
     switch ($page) {
         case 'registerSubmit':
-            require __DIR__ .  '/../app/HandlerRegister.php';
+            require __DIR__ . '/../app/HandlerRegister.php';
             break;
 
         case 'loginSubmit':

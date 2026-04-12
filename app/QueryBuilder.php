@@ -1,8 +1,8 @@
 <?php
-namespace Ren;
+namespace app;
 
 use PDO;
-use Ren\Database;
+use app\Database;
 
 class QueryBuilder
 {
@@ -23,187 +23,143 @@ class QueryBuilder
             $this->pdo = Database::getInstance()->getConnection();
         }
     }
-
-    public function create($data) : int {
-        if(empty($this->table)){
-            throw new \Exception("Имя таблицы не выбрано");
-        }
-        $fields= array_keys($data); // здесь я получаю название полей
-        $placeholders= [];
-        foreach ($fields as $field) {
-            $placeholders[] = ':{$field}';
-        }
-        $sql = "INSERT INTO {$this->table} (" . implode(',', $fields) . ") 
-        VALUES (" . implode(',', $placeholders) . ")";
-
-        $stmt = $this->pdo->prepare($sql);
-        $result = $stmt->execute($data);
-
-        $lastId = $result ? $this->pdo->lastInsertId() : false;
-
-        $this->reset();
-
-        return $lastId;
-
+    public function getPdo(): PDO
+    {
+        return $this->pdo;
+    }
+    public  function table($table) //выбор таблицы
+    {
+        $this->table = $table;
+        return $this;
     }
 
-//    public  function table($table)
-//    {
-//        $this->table = $table;
-//        return $this;
-//    }
-//
-//    public function select($fields = ['*'])
-//    {
-//        $this->fields = is_array($fields) ? $fields : func_get_args();
-//        return $this;
-//    }
-//
-//    public function where($field, $operator, $value = null)
-//    {
-//        if ($value === null) {
-//            $value = $operator;
-//            $operator = '=';
-//        }
-//
-//        $placeholder = ':' . str_replace('.', '_', $field) . '_' . count($this->params);
-//        $this->where[] = "{$field} {$operator} {$placeholder}";
-//        $this->params[$placeholder] = $value;
-//
-//        return $this;
-//    }
-//
-//    public function orderBy($field, $direction = 'ASC')
-//    {
-//        $this->orderBy[] = "{$field} {$direction}";
-//        return $this;
-//    }
-//
-//    public function limit($limit)
-//    {
-//        $this->limit = $limit;
-//        return $this;
-//    }
-//
-//    public function offset($offset)
-//    {
-//        $this->offset = $offset;
-//        return $this;
-//    }
-//
-//    public function first()
+    public function select($fields = ['*']) //выбор полей
+    {
+        $this->fields = is_array($fields) ? $fields : func_get_args();
+        return $this;
+    }
+
+    public function where($field, $operator, $value = null) //условие where
+    {
+        if ($value === null) {
+            $value = $operator;
+            $operator = '=';
+        }
+
+        $placeholder = ':' . str_replace('.', '_', $field) . '_' . count($this->params);
+        $this->where[] = "{$field} {$operator} {$placeholder}";
+        $this->params[$placeholder] = $value;
+
+        return $this;
+    }
+
+    public function orderBy($field, $direction = 'ASC') //сортировка
+    {
+        $this->orderBy[] = "{$field} {$direction}";
+        return $this;
+    }
+
+    public function limit($limit) //ограничение записей
+    {
+        $this->limit = $limit;
+        return $this;
+    }
+
+    public function offset($offset) //пагинация
+    {
+        $this->offset = $offset;
+        return $this;
+    }
+
+//    public function first() //получение перовй запсии
 //    {
 //        $this->limit(1);
 //        $results = $this->get();
-//        $this->reset();
+//        $this->clear();
 //        return !empty($results) ? $results[0] : null;
 //    }
-//
-//    public function get()
+    public function getSelectSQL(): array
+    {
+        $sql = $this->buildSelect();
+        return [$sql, $this->params];
+    }
+
+    public function getInsertSQL(array $data): array
+    {
+    $fields = array_keys($data);
+    $placeholders = array_map(fn($field) => ":{$field}", $fields);
+
+    $sql = "INSERT INTO {$this->table} (" . implode(', ', $fields) . ") 
+            VALUES (" . implode(', ', $placeholders) . ")";
+
+    return [$sql, $data];
+    }
+
+    public function getUpdateSQL(array $data): array
+    {
+        if (empty($this->where)) {
+            throw new \Exception("UPDATE without WHERE is dangerous");
+        }
+
+        $sets = [];
+        foreach (array_keys($data) as $field) {
+            $sets[] = "{$field} = :{$field}";
+        }
+
+        $sql = "UPDATE {$this->table} SET " . implode(', ', $sets);
+        $sql .= " WHERE " . implode(' AND ', $this->where);
+
+        $params = array_merge($data, $this->params);
+
+        return [$sql, $params];
+    }
+
+    public function getDeleteSQL(): array
+    {
+    if (empty($this->where)) {
+        throw new \Exception("DELETE without WHERE is dangerous");
+    }
+
+    $sql = "DELETE FROM {$this->table} WHERE " . implode(' AND ', $this->where);
+
+    return [$sql, $this->params];
+    }
+//    public function get() //выполнение select
 //    {
 //        $sql = $this->buildSelect();
 //        $stmt = $this->pdo->prepare($sql);
 //        $stmt->execute($this->params);
 //        $results = $stmt->fetchAll(PDO::FETCH_ASSOC);
-//        $this->reset();
+//        $this->clear();
 //        return $results;
 //    }
-//
-//    private function buildSelect()
-//    {
-//        if (empty($this->table)) {
-//            throw new \Exception("Table not specified. Call table() first.");
-//        }
-//
-//        $sql = "SELECT " . implode(', ', $this->fields) . " FROM {$this->table}";
-//
-//        if (!empty($this->where)) {
-//            $sql .= " WHERE " . implode(' AND ', $this->where);
-//        }
-//
-//        if (!empty($this->orderBy)) {
-//            $sql .= " ORDER BY " . implode(', ', $this->orderBy);
-//        }
-//
-//        if ($this->limit !== null) {
-//            $sql .= " LIMIT {$this->limit}";
-//        }
-//
-//        if ($this->offset !== null) {
-//            $sql .= " OFFSET {$this->offset}";
-//        }
-//
-//        return $sql;
-//    }
-//
-//    public function insert($data)
-//    {
-//        if (empty($this->table)) {
-//            throw new \Exception("Table not specified. Call table() first.");
-//        }
-//
-//        $fields = array_keys($data);
-//        $placeholders = [];
-//
-//        foreach ($fields as $field) {
-//            $placeholders[] = ":{$field}";
-//        }
-//
-//        $sql = "INSERT INTO {$this->table} (" . implode(', ', $fields) . ")
-//                VALUES (" . implode(', ', $placeholders) . ")";
-//
-//        $stmt = $this->pdo->prepare($sql);
-//        $result = $stmt->execute($data);
-//        $this->reset();
-//        return $result;
-//    }
-//
-//    public function update($data)
-//    {
-//        if (empty($this->table)) {
-//            throw new \Exception("Table not specified. Call table() first.");
-//        }
-//
-//        $sets = [];
-//        foreach (array_keys($data) as $field) {
-//            $sets[] = "{$field} = :{$field}";
-//        }
-//
-//        $sql = "UPDATE {$this->table} SET " . implode(', ', $sets);
-//
-//        if (!empty($this->where)) {
-//            $sql .= " WHERE " . implode(' AND ', $this->where);
-//        } else {
-//            throw new \Exception("UPDATE without WHERE is dangerous. Use where() first.");
-//        }
-//
-//        $stmt = $this->pdo->prepare($sql);
-//        $result = $stmt->execute(array_merge($data, $this->params));
-//        $this->reset();
-//        return $result;
-//    }
-//
-//    public function delete()
-//    {
-//        if (empty($this->table)) {
-//            throw new \Exception("Table not specified. Call table() first.");
-//        }
-//
-//        $sql = "DELETE FROM {$this->table}";
-//
-//        if (!empty($this->where)) {
-//            $sql .= " WHERE " . implode(' AND ', $this->where);
-//        } else {
-//            throw new \Exception("DELETE without WHERE is dangerous. Use where() first.");
-//        }
-//
-//        $stmt = $this->pdo->prepare($sql);
-//        $result = $stmt->execute($this->params);
-//        $this->reset();
-//        return $result;
-//    }
-//
-//    public function count()
+    private function buildSelect() //построение запроса
+    {
+        if (empty($this->table)) {
+            throw new \Exception("Table not specified. Call table() first.");
+        }
+
+        $sql = "SELECT " . implode(', ', $this->fields) . " FROM {$this->table}";
+
+        if (!empty($this->where)) {
+            $sql .= " WHERE " . implode(' AND ', $this->where);
+        }
+
+        if (!empty($this->orderBy)) {
+            $sql .= " ORDER BY " . implode(', ', $this->orderBy);
+        }
+
+        if ($this->limit !== null) {
+            $sql .= " LIMIT {$this->limit}";
+        }
+
+        if ($this->offset !== null) {
+            $sql .= " OFFSET {$this->offset}";
+        }
+
+        return $sql;
+    }
+//    public function count() //подсччет записей
 //    {
 //        $fields = $this->fields;
 //        $this->fields = ['COUNT(*) as count'];
@@ -211,15 +167,15 @@ class QueryBuilder
 //        $this->fields = $fields;
 //        return $result ? (int)$result['count'] : 0;
 //    }
-//
-//    private function reset()
-//    {
-//        $this->table = null;
-//        $this->fields = ['*'];
-//        $this->where = [];
-//        $this->params = [];
-//        $this->orderBy = [];
-//        $this->limit = null;
-//        $this->offset = null;
-//    }
+
+    private function clear() //очистка состояния
+    {
+        $this->table = null;
+        $this->fields = ['*'];
+        $this->where = [];
+        $this->params = [];
+        $this->orderBy = [];
+        $this->limit = null;
+        $this->offset = null;
+    }
 }

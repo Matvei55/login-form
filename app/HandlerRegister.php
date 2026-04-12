@@ -1,7 +1,7 @@
 <?php
-namespace Ren;
+namespace app;
 use PDOException;
-use Ren\Database;
+use app\Database;
 class HandlerRegister {
     private $db;
 

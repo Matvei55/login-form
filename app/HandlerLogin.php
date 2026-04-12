@@ -1,9 +1,9 @@
 <?php
-namespace Ren;
+namespace app;
 
 use PDOException;
-use Ren\Database;
-use Ren\QueryBuilder;
+use app\Database;
+use app\QueryBuilder;
 
 class HandlerLogin {
     private $qb;
