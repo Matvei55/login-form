@@ -8,8 +8,6 @@ use App\Models\AbstractModel;
 class Users extends AbstractModel implements Model
 {
     private string $table = 'users';//здесь имя таблицы
-    private array $data = [];
-    private int $id;
     public function save()
     {
         $pdo = $this->builder->getPDO(); //пдо объект
@@ -29,27 +27,26 @@ class Users extends AbstractModel implements Model
         return $result ? $pdo->lastInsertId() : false; //если результат тру , то возвращает айд
     }
 
-    public function load(?int $id = null, bool $all = false): ?array //айд записи и все записи
+    public function load(?int $id = null): self
     {
-        $pdo = $this->builder->getPDO(); //получаем PDO
-        $builder = $this->builder->table($this->table); //передаем название таблицы
-        if ($id !== null) {  //выводим строку по id и условию where
-            $builder->where('id', $id);
-            [$sql, $params] = $builder->getSelectSQL();
+        if ($id !== null) {
+            $pdo = $this->builder->getPDO();
 
+            [$sql, $params] = $this->builder
+                ->table($this->table)
+                ->where('id', $id)
+                ->getSelectSQL();
             $stmt = $pdo->prepare($sql);
             $stmt->execute($params);
-            return $stmt->fetch(PDO::FETCH_ASSOC) ?:null; //вернет массив данных
+
+            $result = $stmt->fetch(PDO::FETCH_ASSOC);
+            $this->data = $result ?: [];
+
+            if($this->data){
+                $this->id = $this->data['id'] ?? null;
+            }
         }
-
-        [$sql, $params] = $builder->getSelectSQL(); //загрузка всех пользователей
-        $stmt = $pdo->prepare($sql);
-        $stmt->execute($params);
-
-        $result = $stmt->fetchALL(PDO::FETCH_ASSOC);
-
-        return $all ? $result : ($result[0]??null); //Если $result[0] существует и не равен null → верни $result[0] Если $result[0] не существует или равен null → верни null
-
+        return $this;
     }
 
     public function delete(): bool
@@ -61,6 +58,95 @@ class Users extends AbstractModel implements Model
 
         $stmt = $pdo->prepare($sql);
         return $stmt->execute($params);
+    }
+
+    public function getPosts(?int $userID = null): array
+    {
+        $pdo = $this->builder->getPDO();
+        $id = $userID ?? $this->id;
+
+        if(!$id)
+        {
+            return [];
+        }
+
+        [$sql, $params] = $this->builder
+            ->table('posts')
+            ->where('user_id', $id)
+            ->orderBy('created_at', 'desc')
+            ->getSelectSQL();
+
+        $stmt = $pdo->prepare($sql);
+        $stmt->execute($params);
+        return $stmt->fetchAll(PDO::FETCH_ASSOC);
+
+    }
+
+    public function countPosts(?int $userID = null): int
+    {
+        $pdo = $this->builder->getPDO();
+        $id = $userID ?? $this->id;
+
+        if(!$id){
+            return 0;
+        }
+        $sql = "SELECT COUNT(*) as count FROM posts WHERE user_id = :user_id";
+        $stmt = $pdo->prepare($sql);
+        $stmt->execute(['user_id' => $id]);
+        $result = $stmt->fetch(PDO::FETCH_ASSOC);
+
+        return ((int)$result['count']??0);
+    }
+
+    public function getLastPosts(?int $userID = null, int $limit): array //последние посты
+    {
+        $pdo = $this->builder->getPDO();
+        $id = $userID ?? $this->id;
+        if(!$id){
+            return [];
+        }
+
+        [$sql, $params] = $this->builder->table('posts')
+            ->where('user_id', $id)
+            ->orderBy('created_at', 'desc')
+            ->limit($limit)
+            ->getSelectSQL();
+
+        $stmt = $pdo->prepare($sql);
+        $stmt->execute($params);
+
+        return $stmt->fetchAll(PDO::FETCH_ASSOC);
+    }
+
+    public function getUserWithPosts(int $userId): ?array //пользователь и его посты
+    {
+        $user = $this->load($userId);
+
+        if(!$user){
+            return null;
+        }
+
+        $user['posts'] = $this->getPosts($userId);
+        return $user;
+    }
+
+    public function hasPosts(?int $userID = null): bool //проверка на наличее постов
+    {
+        return $this->countPosts($userID) > 0;
+    }
+
+    public function deleteAllPosts(?int $userID = null): bool
+    {
+        $pdo = $this->builder->getPDO();
+        $id = $userID ?? $this->id;
+
+        if(!$id){
+            return false;
+        }
+
+        $sql = "DELETE FROM posts WHERE user_id = :user_id";
+        $stmt = $pdo->prepare($sql);
+        return $stmt->execute(['user_id' => $id]);
     }
 }
 

@@ -7,8 +7,6 @@ use App\Models\AbstractModel;
 class Tegs extends AbstractModel implements Model
 {
     private string $table = 'tags';
-    private  int $id;
-    private array $data = [];
     public function save()
     {
         $pdo = $this->builder->getPdo();

@@ -2,15 +2,13 @@
 namespace App\Models;
 use App\QueryBuilder;
 use App\Models\Model;
+use Couchbase\User;
 use PDO;
 use App\Models\AbstractModel;
 
 class Posts extends AbstractModel implements Model
 {
     private string $table = 'posts';
-
-    private array $data = [];
-    private int $id;
 
 
     public function save()
@@ -62,4 +60,31 @@ class Posts extends AbstractModel implements Model
         $stmt = $pdo->prepare($sql);
         return $stmt->execute($params);
     }
+
+    public function getAuthor(int $postId): ?array  //получить автора поста
+    {
+        $pdo = $this->builder->getPdo();
+        $sql = "SELECT users.* FROM users INNER JOIN posts ON users.id = posts.user_id WHERE posts.id = :postId";
+        $stmt = $pdo->prepare($sql);
+        $stmt->execute(['postId' => $postId]);
+        $result = $stmt->fetch(PDO::FETCH_ASSOC);
+        return $result ? $result : null;
+
+    }
+
+    public function getPostWithAuthor(int $postId): ?array //пост и атвор
+    {
+        $pdo = $this->builder->getPdo();
+        $sql = "SELECT posts.*. user.name as author_name. FROM posts INNER JOIN users ON posts.user_id = users.id WHERE posts.id = :postId";
+        $stmt = $pdo->prepare($sql);
+        $stmt->execute(['postId' => $postId]);
+        return $stmt->fetch(PDO::FETCH_ASSOC) ?: null;
+    }
 }
+
+
+
+
+
+
+
