@@ -7,10 +7,10 @@ use App\QueryBuilder;
 abstract class AbstractModel
 {
     protected array $data = [];
-    protected int $id;
+    protected ?int $id = null;
     public QueryBuilder $builder;
 
-    public function __construct(QueryBuilder $builder)
+    public function __construct()
     {
         $this->init();
     }

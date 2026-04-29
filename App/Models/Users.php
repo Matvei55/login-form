@@ -20,7 +20,8 @@ class Users extends AbstractModel implements Model
             return $stmt->execute($params);
         }
         [$sql, $params] = $this->builder->table($this->table)->getInsertSQL($this->data); //строит скл для создания записи
-
+        var_dump($params);
+        var_dump($sql);
         $stmt = $pdo->prepare($sql); //подготовка скл к выполнению
         $result=  $stmt->execute($params);
 
