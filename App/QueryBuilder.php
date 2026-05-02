@@ -15,6 +15,8 @@ class QueryBuilder
     private $limit = null; //лимит записей
     private $offset = null; //смещение пагинации
 
+    private $joins = [];
+
     public function __construct($pdo = null)
     {
         if ($pdo !== null) {
@@ -23,6 +25,54 @@ class QueryBuilder
             $this->pdo = Database::getInstance()->getConnection();
         }
     }
+
+    public function fetchOne(): ?array
+    {
+        [$sql, $params] = $this->getSelectSQL();
+        $stmt = $this->pdo->prepare($sql);
+        $stmt->execute($params);
+        return $stmt->fetch(PDO::FETCH_ASSOC) ?: null;
+    }
+
+    public function fetchAll(): ?array
+    {
+        [$sql, $params] = $this->getSelectSQL();
+        $stmt = $this->pdo->prepare($sql);
+        $stmt->execute($params);
+        return $stmt->fetchAll(PDO::FETCH_ASSOC);
+    }
+
+    public function insert(array $data): int|bool
+    {
+        [$sql, $params] = $this->getInsertSQL($data);
+        $stmt = $this->pdo->prepare($sql);
+        $result = $stmt->execute($params);
+        return $result ? $this->pdo->lastInsertId() : false;
+    }
+
+    public function update(array $data): int|bool
+    {
+        [$sql, $params] = $this->getUpdateSQL($data);
+        $stmt = $this->pdo->prepare($sql);
+        return $stmt->execute($params);
+    }
+
+    public function delete(): bool
+    {
+        [$sql, $params] = $this->getDeleteSQL();
+        $stmt = $this->pdo->prepare($sql);
+        return $stmt->execute($params);
+    }
+
+    public function count(): int
+    {
+        [$sql, $params] = $this->getCountSQL();
+        $stmt = $this->pdo->prepare($sql);
+        $stmt->execute($params);
+        $result = $stmt->fetch(PDO::FETCH_ASSOC);
+        return (int)($result['count'] ?? 0);
+    }
+
     public function getPdo(): PDO
     {
         return $this->pdo;
@@ -71,17 +121,21 @@ class QueryBuilder
         return $this;
     }
 
-//    public function first() //получение перовй запсии
-//    {
-//        $this->limit(1);
-//        $results = $this->get();
-//        $this->clear();
-//        return !empty($results) ? $results[0] : null;
-//    }
     public function getSelectSQL(): array
     {
-        $sql = $this->buildSelect();
-        return [$sql, $this->params];
+           $sql = $this->buildSelect();
+    if (!empty($this->joins)) {
+        $sql = str_replace(
+            "FROM {$this->table}",
+            "FROM {$this->table} " . implode(' ', $this->joins),
+            $sql
+        );
+    }
+
+    $params = $this->params;
+    $this->clear();
+
+    return [$sql, $params];
     }
 
     public function getInsertSQL(array $data): array
@@ -124,15 +178,25 @@ class QueryBuilder
 
     return [$sql, $this->params];
     }
-//    public function get() //выполнение select
-//    {
-//        $sql = $this->buildSelect();
-//        $stmt = $this->pdo->prepare($sql);
-//        $stmt->execute($this->params);
-//        $results = $stmt->fetchAll(PDO::FETCH_ASSOC);
-//        $this->clear();
-//        return $results;
-//    }
+    public function join(string $table, string $first, string $operator, string $second): self
+    {
+    $this->joins[] = "INNER JOIN {$table} ON {$first} {$operator} {$second}";
+    return $this;
+    }
+
+
+    public function leftJoin(string $table, string $first, string $operator, string $second): self
+    {
+    $this->joins[] = "LEFT JOIN {$table} ON {$first} {$operator} {$second}";
+    return $this;
+    }
+
+
+    public function rightJoin(string $table, string $first, string $operator, string $second): self
+    {
+    $this->joins[] = "RIGHT JOIN {$table} ON {$first} {$operator} {$second}";
+    return $this;
+    }
     private function buildSelect() //построение запроса
     {
         if (empty($this->table)) {
@@ -140,6 +204,10 @@ class QueryBuilder
         }
 
         $sql = "SELECT " . implode(', ', $this->fields) . " FROM {$this->table}";
+
+        if (!empty($this->joins)) {
+            $sql .= " " . implode(' ', $this->joins);
+        }
 
         if (!empty($this->where)) {
             $sql .= " WHERE " . implode(' AND ', $this->where);
@@ -159,14 +227,20 @@ class QueryBuilder
 
         return $sql;
     }
-//    public function count() //подсччет записей
-//    {
-//        $fields = $this->fields;
-//        $this->fields = ['COUNT(*) as count'];
-//        $result = $this->first();
-//        $this->fields = $fields;
-//        return $result ? (int)$result['count'] : 0;
-//    }
+    public function getCountSQL() //подсччет записей
+    {
+         $oldFields = $this->fields;
+        $this->fields = ['COUNT(*) as count'];
+
+        $sql = $this->buildSelect();
+        $params = $this->params;
+
+
+        $this->fields = $oldFields;
+        $this->clear();
+
+        return [$sql, $params];
+    }
 
     private function clear() //очистка состояния
     {
@@ -177,5 +251,6 @@ class QueryBuilder
         $this->orderBy = [];
         $this->limit = null;
         $this->offset = null;
+        $this->joins = [];
     }
 }

@@ -1,14 +1,16 @@
 <?php
 namespace App\Models;
+use App\Models\Users;
 use App\QueryBuilder;
 use App\Models\Model;
-use Couchbase\User;
+use App\Models\Tags;
 use PDO;
 use App\Models\AbstractModel;
 
 class Posts extends AbstractModel implements Model
 {
     private string $table = 'posts';
+    private ?Users  $user = null;
 
 
     public function save()
@@ -17,12 +19,12 @@ class Posts extends AbstractModel implements Model
 
         if ($this->id !== null) {
             [$sql, $params] = $this->builder->table($this->table)->
-                where('id', $this->id)->getUpdateSQL($this->data);
+            where('id', $this->id)->getUpdateSQL($this->data);
             $stmt = $pdo->prepare($sql);
             return $stmt->execute($params);
         }
         [$sql, $params] = $this->builder->table($this->table)->
-            getInsertSQL($this->data);
+        getInsertSQL($this->data);
 
         $stmt = $pdo->prepare($sql);
         $result = $stmt->execute($params);
@@ -30,24 +32,26 @@ class Posts extends AbstractModel implements Model
         return $result ? $pdo->lastInsertId() : false;
     }
 
-    public function load(?int $id = null, bool $all = false): ?array
+    public function load(?int $id = null): self
     {
-        $pdo = $this->builder->getPdo();
-        $builder = $this->builder->table($this->table);
-
         if ($id !== null) {
-            $builder->where('id', $id);
-            [$sql, $params] = $builder->getSelectSQL();
+            $pdo = $this->builder->getPDO();
+
+            [$sql, $params] = $this->builder
+                ->table($this->table)
+                ->where('id', $id)
+                ->getSelectSQL();
             $stmt = $pdo->prepare($sql);
             $stmt->execute($params);
-            return $stmt->fetch(PDO::FETCH_ASSOC) ?: null;
-        }
-        [$sql, $params] = $builder->getSelectSQL();
-        $stmt = $pdo->prepare($sql);
-        $stmt->execute($params);
 
-        $result = $stmt->fetchAll(PDO::FETCH_ASSOC);
-        return $result ? $result : ($result[0] ?? null);
+            $result = $stmt->fetch(PDO::FETCH_ASSOC);
+            $this->data = $result ?: [];
+
+            if ($this->data) {
+                $this->id = $this->data['id'] ?? null;
+            }
+        }
+        return $this;
     }
 
     public function delete(): bool
@@ -55,33 +59,40 @@ class Posts extends AbstractModel implements Model
         $pdo = $this->builder->getPdo();
 
         [$sql, $params] = $this->builder->table($this->table)->
-            where('id', $this->id)->getDeleteSQL();
+        where('id', $this->id)->getDeleteSQL();
 
         $stmt = $pdo->prepare($sql);
         return $stmt->execute($params);
     }
 
-    public function getAuthor(int $postId): ?array  //получить автора поста
+
+//
+    public function getPostWithAuthor(): ?array //пост и атвор
     {
-        $pdo = $this->builder->getPdo();
-        $sql = "SELECT users.* FROM users INNER JOIN posts ON users.id = posts.user_id WHERE posts.id = :postId";
-        $stmt = $pdo->prepare($sql);
-        $stmt->execute(['postId' => $postId]);
-        $result = $stmt->fetch(PDO::FETCH_ASSOC);
-        return $result ? $result : null;
+
 
     }
 
-    public function getPostWithAuthor(int $postId): ?array //пост и атвор
+    public function setUser(Users $user): self
     {
-        $pdo = $this->builder->getPdo();
-        $sql = "SELECT posts.*. user.name as author_name. FROM posts INNER JOIN users ON posts.user_id = users.id WHERE posts.id = :postId";
-        $stmt = $pdo->prepare($sql);
-        $stmt->execute(['postId' => $postId]);
-        return $stmt->fetch(PDO::FETCH_ASSOC) ?: null;
+        if ($user->getId() === null) {
+            throw new \RuntimeException("пользователь не создан");
+        }
+        $this->user = $user;
+        $this->data['user_id'] = $user->getId();
+        return $this;
+    }
+
+    public function getUser(): Users
+    {
+        if($this->user === null) {
+            $user = new Users();
+            $user->load($this->data['user_id']);
+            $this->user = $user;
+        }
+       return $this->user;
     }
 }
-
 
 
 

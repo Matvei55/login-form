@@ -1,7 +1,7 @@
 <?php
-require __DIR__ . '/../app/Autolouder.php';
+require __DIR__ . '/../App/Autolouder.php';
 session_start();
-use app\Render;
+use App\Render;
 
 if ($_SERVER["REQUEST_METHOD"] === "POST") {
     $page = $_GET["page"] ?? '';

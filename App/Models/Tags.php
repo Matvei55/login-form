@@ -4,7 +4,7 @@ namespace App\Models;
 use App\QueryBuilder;
 use PDO;
 use App\Models\AbstractModel;
-class Tegs extends AbstractModel implements Model
+class Tags extends AbstractModel implements Model
 {
     private string $table = 'tags';
     public function save()
@@ -24,24 +24,26 @@ class Tegs extends AbstractModel implements Model
         return $result ? $pdo->lastInsertId() : false;
     }
 
-    public function load(?int $id = null, bool $all = false): ?array
+     public function load(?int $id = null): self
     {
-        $pdo = $this->builder->getPdo();
-        $builder = $this->builder;
-        if($id !== null){
-            $builder = $builder->where('id', $id);
-            [$sql, $params] =$builder->getSelectSQL();
+        if ($id !== null) {
+            $pdo = $this->builder->getPDO();
 
+            [$sql, $params] = $this->builder
+                ->table($this->table)
+                ->where('id', $id)
+                ->getSelectSQL();
             $stmt = $pdo->prepare($sql);
             $stmt->execute($params);
-            return $stmt->fetch(PDO::FETCH_ASSOC) ?:null;
-        }
-        [$sql, $params] =$builder->getSelectSQL();
-        $stmt = $pdo->prepare($sql);
-        $stmt->execute($params);
-        $result = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
-        return $result ? $result : ($result[0] ?? null);
+            $result = $stmt->fetch(PDO::FETCH_ASSOC);
+            $this->data = $result ?: [];
+
+            if($this->data){
+                $this->id = $this->data['id'] ?? null;
+            }
+        }
+        return $this;
     }
 
     public function delete(): bool

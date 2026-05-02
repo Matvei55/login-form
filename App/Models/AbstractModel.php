@@ -29,4 +29,12 @@ abstract class AbstractModel
         $this->data = $data;
         return $this;
     }
+
+    public function getId():?int
+    {
+        if ($this->id === null) {
+            return $this->id;
+        }
+        return $this->data['id'] ?? null;
+    }
 }

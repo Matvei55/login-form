@@ -2,6 +2,7 @@
 namespace App\Models;
 use App\Models\Model;
 use App\QueryBuilder;
+use http\Params;
 use PDO;
 use App\Models\AbstractModel;
 
@@ -20,12 +21,17 @@ class Users extends AbstractModel implements Model
             return $stmt->execute($params);
         }
         [$sql, $params] = $this->builder->table($this->table)->getInsertSQL($this->data); //строит скл для создания записи
-        var_dump($params);
-        var_dump($sql);
+//        var_dump($params);
+//        var_dump($sql);
         $stmt = $pdo->prepare($sql); //подготовка скл к выполнению
         $result=  $stmt->execute($params);
 
-        return $result ? $pdo->lastInsertId() : false; //если результат тру , то возвращает айд
+        if($result){
+            $this->id = (int)$pdo->lastInsertId();
+            $this->data['id'] = $this->id;
+            return $this->id;
+        }
+        return false;
     }
 
     public function load(?int $id = null): self
@@ -61,19 +67,18 @@ class Users extends AbstractModel implements Model
         return $stmt->execute($params);
     }
 
-    public function getPosts(?int $userID = null): array
+    public function getPosts(): array
     {
         $pdo = $this->builder->getPDO();
-        $id = $userID ?? $this->id;
 
-        if(!$id)
+        if(!$this->id)
         {
             return [];
         }
 
         [$sql, $params] = $this->builder
             ->table('posts')
-            ->where('user_id', $id)
+            ->where('user_id', $this->id)
             ->orderBy('created_at', 'desc')
             ->getSelectSQL();
 
@@ -83,32 +88,34 @@ class Users extends AbstractModel implements Model
 
     }
 
-    public function countPosts(?int $userID = null): int
+    public function countPosts(): int
     {
-        $pdo = $this->builder->getPDO();
-        $id = $userID ?? $this->id;
 
-        if(!$id){
+
+        if(!$this->id){
             return 0;
         }
-        $sql = "SELECT COUNT(*) as count FROM posts WHERE user_id = :user_id";
+        $pdo = $this->builder->getPDO();
+        [$sql, $params] = $this->builder
+            ->table('posts')
+            ->where('user_id', $this->id)
+            ->getCountSQL();
         $stmt = $pdo->prepare($sql);
-        $stmt->execute(['user_id' => $id]);
+        $stmt->execute(['user_id' => $this->id]);
         $result = $stmt->fetch(PDO::FETCH_ASSOC);
 
-        return ((int)$result['count']??0);
+        return (int)($result['count']??0);
     }
 
-    public function getLastPosts(?int $userID = null, int $limit): array //последние посты
+    public function getLastPosts(int $limit): array //последние посты
     {
         $pdo = $this->builder->getPDO();
-        $id = $userID ?? $this->id;
-        if(!$id){
+        if(!$this->id){
             return [];
         }
 
         [$sql, $params] = $this->builder->table('posts')
-            ->where('user_id', $id)
+            ->where('user_id', $this->id)
             ->orderBy('created_at', 'desc')
             ->limit($limit)
             ->getSelectSQL();
@@ -119,35 +126,39 @@ class Users extends AbstractModel implements Model
         return $stmt->fetchAll(PDO::FETCH_ASSOC);
     }
 
-    public function getUserWithPosts(int $userId): ?array //пользователь и его посты
+    public function getUserWithPosts(): ?array //пользователь и его посты
     {
-        $user = $this->load($userId);
 
-        if(!$user){
+        if(!$this->id){
             return null;
         }
-
-        $user['posts'] = $this->getPosts($userId);
-        return $user;
+        $user = $this->load($this->id);
+        if(!$user->getData()) {
+            return null;
+        }
+        $userData = $user->getData();
+        $userData['posts'] = $this->getPosts();
+        return $userData;
     }
 
-    public function hasPosts(?int $userID = null): bool //проверка на наличее постов
+    public function hasPosts(): bool //проверка на наличее постов
     {
-        return $this->countPosts($userID) > 0;
+        return $this->countPosts($this->id) > 0;
     }
 
-    public function deleteAllPosts(?int $userID = null): bool
+    public function deleteAllPosts(): bool
     {
-        $pdo = $this->builder->getPDO();
-        $id = $userID ?? $this->id;
 
-        if(!$id){
+        if(!$this->id){
             return false;
         }
-
-        $sql = "DELETE FROM posts WHERE user_id = :user_id";
+        $pdo= $this->builder->getPDO();
+        [$sql,$params] = $this->builder
+            ->table('posts')
+            ->where('user_id', $this->id)
+            ->getDeleteSQL();
         $stmt = $pdo->prepare($sql);
-        return $stmt->execute(['user_id' => $id]);
+        return $stmt->execute($params);
     }
 }
 
