@@ -77,7 +77,8 @@ class QueryBuilder
     {
         return $this->pdo;
     }
-    public  function table($table) //выбор таблицы
+
+    public function table($table) //выбор таблицы
     {
         $this->table = $table;
         return $this;
@@ -123,30 +124,30 @@ class QueryBuilder
 
     public function getSelectSQL(): array
     {
-           $sql = $this->buildSelect();
-    if (!empty($this->joins)) {
-        $sql = str_replace(
-            "FROM {$this->table}",
-            "FROM {$this->table} " . implode(' ', $this->joins),
-            $sql
-        );
-    }
+        $sql = $this->buildSelect();
+        if (!empty($this->joins)) {
+            $sql = str_replace(
+                "FROM {$this->table}",
+                "FROM {$this->table} " . implode(' ', $this->joins),
+                $sql
+            );
+        }
 
-    $params = $this->params;
-    $this->clear();
+        $params = $this->params;
+        $this->clear();
 
-    return [$sql, $params];
+        return [$sql, $params];
     }
 
     public function getInsertSQL(array $data): array
     {
-    $fields = array_keys($data);
-    $placeholders = array_map(fn($field) => ":{$field}", $fields);
+        $fields = array_keys($data);
+        $placeholders = array_map(fn($field) => ":{$field}", $fields);
 
-    $sql = "INSERT INTO {$this->table} (" . implode(', ', $fields) . ") 
+        $sql = "INSERT INTO {$this->table} (" . implode(', ', $fields) . ") 
             VALUES (" . implode(', ', $placeholders) . ")";
 
-    return [$sql, $data];
+        return [$sql, $data];
     }
 
     public function getUpdateSQL(array $data): array
@@ -170,33 +171,35 @@ class QueryBuilder
 
     public function getDeleteSQL(): array
     {
-    if (empty($this->where)) {
-        throw new \Exception("DELETE without WHERE is dangerous");
+        if (empty($this->where)) {
+            throw new \Exception("DELETE without WHERE is dangerous");
+        }
+
+        $sql = "DELETE FROM {$this->table} WHERE " . implode(' AND ', $this->where);
+
+        return [$sql, $this->params];
     }
 
-    $sql = "DELETE FROM {$this->table} WHERE " . implode(' AND ', $this->where);
-
-    return [$sql, $this->params];
-    }
     public function join(string $table, string $first, string $operator, string $second): self
     {
-    $this->joins[] = "INNER JOIN {$table} ON {$first} {$operator} {$second}";
-    return $this;
+        $this->joins[] = "INNER JOIN {$table} ON {$first} {$operator} {$second}";
+        return $this;
     }
 
 
     public function leftJoin(string $table, string $first, string $operator, string $second): self
     {
-    $this->joins[] = "LEFT JOIN {$table} ON {$first} {$operator} {$second}";
-    return $this;
+        $this->joins[] = "LEFT JOIN {$table} ON {$first} {$operator} {$second}";
+        return $this;
     }
 
 
     public function rightJoin(string $table, string $first, string $operator, string $second): self
     {
-    $this->joins[] = "RIGHT JOIN {$table} ON {$first} {$operator} {$second}";
-    return $this;
+        $this->joins[] = "RIGHT JOIN {$table} ON {$first} {$operator} {$second}";
+        return $this;
     }
+
     private function buildSelect() //построение запроса
     {
         if (empty($this->table)) {
@@ -227,9 +230,10 @@ class QueryBuilder
 
         return $sql;
     }
+
     public function getCountSQL() //подсччет записей
     {
-         $oldFields = $this->fields;
+        $oldFields = $this->fields;
         $this->fields = ['COUNT(*) as count'];
 
         $sql = $this->buildSelect();
@@ -252,5 +256,47 @@ class QueryBuilder
         $this->limit = null;
         $this->offset = null;
         $this->joins = [];
+    }
+
+    public function getPostTags(int $postId): array
+    {
+        $sql = "SELECT tags.* FROM tags 
+            INNER JOIN post_tag ON tags.id = post_tag.tag_id 
+            WHERE post_tag.post_id = :post_id
+            ORDER BY tags.title ASC";
+
+        $stmt = $this->pdo->prepare($sql);
+        $stmt->execute(['post_id' => $postId]);
+
+        return $stmt->fetchAll(PDO::FETCH_ASSOC);
+    }
+
+    public function tagExists(int $postId, int $tagId): bool
+    {
+        $sql ="SELECT 1 FROM post_tag WHERE post_id = :post_id AND tag_id = :tag_id";
+        $stmt = $this->pdo->prepare($sql);
+        $stmt->execute(['post_id' => $postId, 'tag_id' => $tagId]);
+        return $stmt->fetch() !== false;
+    }
+
+    public function attachTag(int $postId, int $tagId): bool
+    {
+        $sql = "INSERT INTO post_tag (post_id, tag_id) VALUES (:post_id, :tag_id)";
+        $stmt = $this->pdo->prepare($sql);
+        return $stmt->execute(['post_id' => $postId, 'tag_id' => $tagId]);
+    }
+
+    public function detachTag(int $postId, int $tagId): bool
+    {
+        $sql = "DELETE FROM post_tag WHERE post_id = :post_id AND tag_id = :tag_id";
+        $stmt = $this->pdo->prepare($sql);
+        return $stmt->execute(['post_id' => $postId, 'tag_id' => $tagId]);
+    }
+
+    public function deleteAllPostTags(int $postId): bool
+    {
+        $sql = "DELETE FROM post_tag WHERE post_id = :post_id";
+        $stmt = $this->pdo->prepare($sql);
+        return $stmt->execute(['post_id' => $postId]);
     }
 }

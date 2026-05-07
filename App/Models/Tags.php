@@ -7,39 +7,39 @@ use App\Models\AbstractModel;
 class Tags extends AbstractModel implements Model
 {
     private string $table = 'tags';
+
     public function save()
     {
-        $pdo = $this->builder->getPdo();
-
-        if($this->id !== null){
-            [$sql, $params] = $this->builder->table($this->table)->
-                where('id', $this->id)->getUpdateSQL($this->data);
-
-            $stmt = $pdo->prepare($sql);
-            return $stmt->execute($params);
+        if ($this->id !== null) {
+            $result = $this->builder
+                ->table($this->table)
+                ->where('id', $this->id)
+                ->update($this->data);
+            return $result;
         }
-        [$sql, $params] = $this->builder->table($this->table)->getInsertSQL($this->data);
-        $stmt = $pdo->prepare($sql);
-        $result = $stmt->execute($params);
-        return $result ? $pdo->lastInsertId() : false;
+        $newId = $this->builder
+            ->table($this->table)
+            ->insert($this->data);
+
+        if ($newId) {
+            $this->id = $newId;
+            $this->data['id'] = $newId;
+            return $newId;
+        }
+        return false;
     }
 
-     public function load(?int $id = null): self
+    public function load(?int $id = null): self
     {
         if ($id !== null) {
-            $pdo = $this->builder->getPDO();
-
-            [$sql, $params] = $this->builder
+            $result = $this->builder
                 ->table($this->table)
                 ->where('id', $id)
-                ->getSelectSQL();
-            $stmt = $pdo->prepare($sql);
-            $stmt->execute($params);
+                ->fetchOne();
 
-            $result = $stmt->fetch(PDO::FETCH_ASSOC);
             $this->data = $result ?: [];
 
-            if($this->data){
+            if ($this->data) {
                 $this->id = $this->data['id'] ?? null;
             }
         }
@@ -48,12 +48,16 @@ class Tags extends AbstractModel implements Model
 
     public function delete(): bool
     {
-        $pdo = $this->builder->getPdo();
+        $result = $this->builder
+            ->table($this->table)
+            ->where('id', $this->id)
+            ->delete();
 
-        [$sql, $params] = $this->builder->table($this->table)->
-            where('id', $this->id)->getDeleteSQL();
-
-        $stmt = $pdo->prepare($sql);
-        return $stmt->execute($params);
+        if ($result) {
+            $this->data = [];
+            $this->id = null;
+        }
+        return $result;
     }
+
 }

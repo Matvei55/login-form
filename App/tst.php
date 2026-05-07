@@ -9,71 +9,35 @@ use App\Models\Posts;
 use App\QueryBuilder;
 use App\Models\AbstractModel;
 
-//юзер
-
-
-//$user ->load(1);
-//$data = $user->getData();
-//echo $data['name'];
-
-//$db = Database::getInstance();
-//$pdo = $db->getConnection();
-//$sql = "INSERT INTO users (name,password) VALUES ('Matvei', 'hash') ";
-//$pdo->exec($sql);
-//
-//echo "zxzxzx";
-
-//$pdo = new PDO("mysql:host=mysql_db;dbname=users;charset=utf8", "root", "myrootpassword");
-//$pdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
-//
-//$sql = "INSERT INTO users (name, password) VALUES (:name, :password)";
-//$stmt = $pdo->prepare($sql);
-//
-//$stmt->execute([
-//    ':name' => '1111',
-//    ':password' => '3333'
+//$user = new Users();
+//$user->setData([
+//    'name' => "5",
+//    'password' => password_hash("5", PASSWORD_DEFAULT)
 //]);
-//echo "ID: " . $pdo->lastInsertId();$tags
-//теги
-//$tags = new Tags();
-//$tags->setData([
-//    'title' => "php"
+//$user->save();
+$post = new Posts();
+$tag1 = new Tags();
+$tag2 = new Tags();
+//$tag2->setData([
+//    'title' => "10"
 //]);
-//$tags->save();
-//
-//$tags->load(1);
-//$data = $tags->getData();
-//echo $data['title'];
-
+//$tag2->save();
+//$tag1->setData([
+//    'title' => "11"
+//]);
+//$tag1->save();
 //$post->setData([
-//    'title' => "php",
-//    'content' => "php in program",
-//    'user_id' => 1,
+//    'title' => "....",
+//    'content' => "bla"
 //]);
+//$post->setUser($user);
+$post->load(21);
+//$post->addTag($tag1);
+//$post->addTag($tag2);
 //$post->save();
-//$post->load(1);
-//$data = $post->getData();
-//echo $data['title'];
-$post = new Posts();
-$user = new Users();
-$user->setData([
-    'name' => "4",
-    'password' => password_hash("4", PASSWORD_DEFAULT)
-]);
-$user->save();
+$posts = $post->getTags();
+foreach ($posts as $tag) {
+    $data = $tag->getData();
+    echo $data['title'] . "\n";
+}
 
-
-$post->setData([
-    'title' => "111",
-    'content' => "222"
-]);
-$post->setUser($user);
-$post->save();
-$data=$post->getData();
-echo $data['user_id'];
-
-//
-
-
-$post = new Posts();
-$post->load(10);

@@ -37,4 +37,14 @@ abstract class AbstractModel
         }
         return $this->data['id'] ?? null;
     }
+
+    protected function saveAfter():void
+    {
+
+    }
+
+    protected function saveBefore():void
+    {
+
+    }
 }

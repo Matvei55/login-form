@@ -10,41 +10,39 @@ use App\Models\AbstractModel;
 class Posts extends AbstractModel implements Model
 {
     private string $table = 'posts';
-    private ?Users  $user = null;
+    private ?Users $user = null;
+    private array $tags = [];
 
 
     public function save()
     {
-        $pdo = $this->builder->getPdo();
-
         if ($this->id !== null) {
-            [$sql, $params] = $this->builder->table($this->table)->
-            where('id', $this->id)->getUpdateSQL($this->data);
-            $stmt = $pdo->prepare($sql);
-            return $stmt->execute($params);
+            $result = $this->builder
+                ->table($this->table)
+                ->where('id', $this->id)
+                ->update($this->data);
+            return $result;
         }
-        [$sql, $params] = $this->builder->table($this->table)->
-        getInsertSQL($this->data);
+        $newId = $this->builder
+            ->table($this->table)
+            ->insert($this->data);
 
-        $stmt = $pdo->prepare($sql);
-        $result = $stmt->execute($params);
-
-        return $result ? $pdo->lastInsertId() : false;
+        if ($newId) {
+            $this->id = $newId;
+            $this->data['id'] = $newId;
+            return $newId;
+        }
+        return false;
     }
 
     public function load(?int $id = null): self
     {
         if ($id !== null) {
-            $pdo = $this->builder->getPDO();
-
-            [$sql, $params] = $this->builder
+            $result = $this->builder
                 ->table($this->table)
                 ->where('id', $id)
-                ->getSelectSQL();
-            $stmt = $pdo->prepare($sql);
-            $stmt->execute($params);
+                ->fetchOne();
 
-            $result = $stmt->fetch(PDO::FETCH_ASSOC);
             $this->data = $result ?: [];
 
             if ($this->data) {
@@ -56,22 +54,18 @@ class Posts extends AbstractModel implements Model
 
     public function delete(): bool
     {
-        $pdo = $this->builder->getPdo();
+        $result = $this->builder
+            ->table($this->table)
+            ->where('id', $this->id)
+            ->delete();
 
-        [$sql, $params] = $this->builder->table($this->table)->
-        where('id', $this->id)->getDeleteSQL();
-
-        $stmt = $pdo->prepare($sql);
-        return $stmt->execute($params);
+        if ($result) {
+            $this->data = [];
+            $this->id = null;
+        }
+        return $result;
     }
 
-
-//
-    public function getPostWithAuthor(): ?array //пост и атвор
-    {
-
-
-    }
 
     public function setUser(Users $user): self
     {
@@ -85,14 +79,75 @@ class Posts extends AbstractModel implements Model
 
     public function getUser(): Users
     {
-        if($this->user === null) {
+        if ($this->user === null) {
             $user = new Users();
             $user->load($this->data['user_id']);
             $this->user = $user;
         }
-       return $this->user;
+        return $this->user;
+    }
+
+    public function setTag(array $tags): self
+    {
+        $postId = $this->getId();
+
+        if($postId) {
+            $this->builder->deleteAllPostTags($postId);
+
+            foreach ($tags as $tag) {
+                $this->builder->attachTag($postId, $tag->getId());
+            }
+            $this->clearTagsCache();
+        }
+        return $this;
+    }
+
+    private function clearTagsCache(): self
+    {
+        $this->tags = [];
+        return $this;
+    }
+
+    public function addTag(Tags $tag): self
+    {
+       $postId = $this->getId();
+       $tagId = $tag->getId();
+       if($postId && $tagId && !$this->builder->tagExists($postId, $tagId)) {
+           $this->builder->attachTag($postId, $tagId);
+           $this->clearTagsCache();
+       }
+       return $this;
+    }
+
+    public function getTags(): array
+    {
+        if($this->tags == null) {
+            $tagsData = $this->builder->getPostTags($this->getId());
+            $tagsList = [];
+
+            foreach ($tagsData as $tagData) {
+                $tag = new Tags();
+                $tag->setData($tagData);
+                $tagsList[] = $tag;
+            }
+            $this->tags = $tagsList;
+        }
+        return $this->tags;
+    }
+
+    public function getTagTitles(): array
+    {
+        $tags = $this->getTags();
+        $titles = [];
+
+        foreach ($tags as $tag) {
+        $data = $tag->getData();
+        $titles[] = $data['title'];
+        }
+        return $titles;
     }
 }
+
 
 
 
