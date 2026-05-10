@@ -1,11 +1,5 @@
 <?php
 namespace App\Models;
-use App\Models\Users;
-use App\QueryBuilder;
-use App\Models\Model;
-use App\Models\Tags;
-use PDO;
-use App\Models\AbstractModel;
 
 class Posts extends AbstractModel implements Model
 {

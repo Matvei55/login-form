@@ -2,7 +2,7 @@
 namespace App;
 use PDOException;
 use App\Database;
-class HandlerRegister {
+class HandlerPost {
     private $db;
 
     public function __construct() {
@@ -52,5 +52,5 @@ class HandlerRegister {
 }
 
 // Создаем экземпляр БЕЗ параметров
-$handlerRegister = new HandlerRegister();
+$handlerRegister = new HandlerPost();
 $handlerRegister->processRegistration();

@@ -2,12 +2,8 @@
 
 require __DIR__ . '/../App/Autoloader.php';
 
-use App\Database;
-use App\Models\Users;
-use App\Models\Tags;
 use App\Models\Posts;
-use App\QueryBuilder;
-use App\Models\AbstractModel;
+use App\Models\Tags;
 
 //$user = new Users();
 //$user->setData([

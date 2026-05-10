@@ -1,6 +1,10 @@
 <?php
 namespace App;
+use App\QueryBuilder;
+use App\Models\Users;
+
 class Render{
+
     private $templatePath;
 
     public function __construct($templatePath = '/var/www/html/templates'){

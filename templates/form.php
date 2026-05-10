@@ -1,45 +1,63 @@
+<?php
+use App\Models\Users;
+$userModel = new Users();
+$users = $userModel->load(null, true);
+?>
 <div class="flex-container">
-    <form method="post" action="http://localhost:81/index.php/?page=loginSubmit" novalidate>
+    <form method="post" action="index.php?page=userSubmit" novalidate>
         <div class="div-left">
-            <h1>Login</h1>
-            <label>Введите свое имя:</label>
-            <input type="text" name="username" required>
+        <h1>Создать пользователя</h1>
+        <label>Имя пользователя
+            <input type="text" name="username" required placeholder="Введите имя">
+        </label>
 
-            <label>Введите пароль:</label>
-            <input type="password" name="password" required>
+        <label>Пароль
+            <input type="password" name="password" required placeholder="Введите пароль">
+        </label>
 
-            <button type="submit" name="loginSubmit">войти</button>
-            <div>
+        <button type="submit" name="userSubmit">Создать пользователя</button>
+
+        <?php if(!empty($userErrors)): ?>
+            <div class="errors">
                 <ul>
-                    <?php if (!empty($error)): ?>
-                        <?php foreach ($error as $value): ?>
-                            <li><?= htmlspecialchars($value) ?></li>
-                        <?php endforeach; ?>
-                    <?php endif; ?>
+                    <?php foreach($userErrors as $value): ?>
+                        <li><?= htmlspecialchars($value) ?></li>
+                    <?php endforeach; ?>
                 </ul>
             </div>
+        <?php endif; ?>
+
+        <?php if(!empty($userSuccess)): ?>
+            <div class="success">
+                <?= htmlspecialchars($value) ?>
+            </div>
+        <?php endif; ?>
         </div>
     </form>
 
-    <form method="post" action="http://localhost:81/index.php/?page=registerSubmit" novalidate>
+
+
+    <form method="post" action="/pub/index.php?page=postSubmit" novalidate>
         <div class="div-right">
-            <h1>Authorization</h1>
-            <label>Придумайте свое имя:</label>
-            <input type="text" name="username" required>
-
-            <label>Придумайте пароль</label>
-            <input type="password" name="password" required>
-
-            <button type="submit" name="registerSubmit">зарегестрироваться</button>
-            <div>
-                <ul>
-                    <?php if (!empty($errors)): ?>
-                        <?php foreach ($errors as $value): ?>
-                            <li><?= htmlspecialchars($value) ?></li>
-                        <?php endforeach; ?>
-                    <?php endif; ?>
-                </ul>
-            </div>
+            <h1>Создать пост</h1>
+            <label>Заголовок поста
+            <input type="text" name="title" required placeholder="Введите заголовок поста">
+            </label>
+            <label>Содержание
+                <textarea name="content" rows="8" placeholder="Введите текст поста"></textarea>
+                </label>
+                    <label>
+                    <input type="text" name="tags" placeholder="теги через пробел">
+                </label>
+                <label>Автор:
+<!--                    <select name="user_id" required>-->
+<!--                        <option value="">Выберите автора</option>-->
+<!--                        --><?php //foreach($users as $user): ?>
+<!--                            <option value="--><?php //= $user['id'] ?><!--">--><?php //= htmlspecialchars($user['name']) ?><!--</option>-->
+<!--                        --><?php //endforeach; ?>
+<!--                    </select>-->
+                </label>
+            <button type="submit" name="postSubmit">Создать пост</button>
         </div>
     </form>
 </div>
