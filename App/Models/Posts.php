@@ -140,6 +140,15 @@ class Posts extends AbstractModel implements Model
         }
         return $titles;
     }
+
+    public function getPostsByUser(int $userId): array
+    {
+        return $this->builder
+            ->table($this->table)
+            ->where('user_id', $userId)
+            ->orderBy('created_at', 'DESC')
+            ->fetchAll();
+    }
 }
 
 

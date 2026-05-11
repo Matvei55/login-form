@@ -128,6 +128,3 @@ class Users extends AbstractModel implements Model
             ->delete();
     }
 }
-
-
-

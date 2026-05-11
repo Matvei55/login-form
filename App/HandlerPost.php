@@ -1,56 +1,66 @@
 <?php
-namespace App;
-use PDOException;
-use App\Database;
-class HandlerPost {
-    private $db;
+use App\Models\Posts;
+use App\Models\Tags;
+use App\Models\Users;
+use App\QueryBuilder;
 
-    public function __construct() {
-        // Создаем Database внутри класса
-        $this->db = Database::getInstance();
+if (!isset($_SESSION['user_id'])) {
+    header("Location: /index.php?page=login");
+    exit();
+}
+
+$postModel = new Posts();
+$tagModel = new Tags();
+$userModel = new Users();
+
+$title = trim($_POST['title'] ?? '');
+$content = trim($_POST['content'] ?? '');
+$tagsInput = trim($_POST['tags'] ?? '');
+$errors = [];
+
+if (empty($title)) {
+    $errors[] = 'Заголовок обязателен';
+} elseif (mb_strlen($title) < 3) {
+    $errors[] = 'Заголовок минимум 3 символа';
+}
+
+if (empty($errors)) {
+    // Получаем пользователя
+    $user = $userModel->load($_SESSION['user_id']);
+
+    $postModel->setUser($user)
+        ->setData([
+            'title' => $title,
+            'content' => $content
+        ]);
+
+    $postId = $postModel->save();
+
+    if ($postId && !empty($tagsInput)) {
+        $tagNames = array_unique(array_filter(explode(' ', $tagsInput)));
+        foreach ($tagNames as $tagName) {
+            $existingTag = $tagModel->findByName($tagName);
+            if ($existingTag) {
+                $tagId = $existingTag['id'];
+            } else {
+                $tagId = $tagModel->setData(['name' => $tagName])->save();
+            }
+            if ($tagId) {
+                $tagModel->builder->attachTag($postId, $tagId);
+            }
+        }
     }
 
-    public function processRegistration() {
-        if ($_POST['username'] && $_POST['password']) {
-            $username = trim($_POST['username']);
-            $password = $_POST['password'];
-
-            // Валидация входных данных
-            if (empty($username) || empty($password)) {
-                $_SESSION['errors'] = ['Заполните все поля'];
-                return;
-            }
-
-            try {
-                // Проверяем существование пользователя
-                $stmt = $this->db->query("SELECT id FROM users WHERE username = ?", [$username]);
-
-                if ($stmt->fetch()) {
-                    $_SESSION['errors'] = ["Пользователь '$username' уже существует"];
-                } else {
-                    // Регистрируем нового пользователя
-                    $password_hash = password_hash($password, PASSWORD_DEFAULT);
-                    $result = $this->db->query(
-                        "INSERT INTO users (username, password) VALUES (?, ?)",
-                        [$username, $password_hash]
-                    );
-
-                    if ($result->rowCount() > 0) {
-                        $_SESSION['success'] = "Пользователь '$username' зарегистрирован";
-                    } else {
-                        $_SESSION['errors'] = ["Не удалось зарегистрировать пользователя"];
-                    }
-                }
-
-            } catch (PDOException $e) {
-                $_SESSION['errors'] = ["Ошибка базы данных: " . $e->getMessage()];
-            }
-        } else {
-            $_SESSION['errors'] = ['Заполните все поля'];
-        }
+    if ($postId) {
+        $_SESSION['success'] = "Пост '{$title}' успешно создан!";
+    } else {
+        $errors[] = 'Не удалось создать пост';
     }
 }
 
-// Создаем экземпляр БЕЗ параметров
-$handlerRegister = new HandlerPost();
-$handlerRegister->processRegistration();
+if (!empty($errors)) {
+    $_SESSION['errors'] = $errors;
+}
+
+header("Location: /index.php?page=posts");
+exit();

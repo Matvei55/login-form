@@ -10,9 +10,9 @@ class Render{
     public function __construct($templatePath = '/var/www/html/templates'){
         $this->templatePath = $templatePath;
     }
-    public function render($templateName, $data = [], $layout='layout'){
+    public function render($templateName, $data = [], $layout='layouts/layout'){
         $content= $this->renderTemplate($templateName,$data);
-        return $this->renderTemplate("layouts/{$layout}", array_merge($data, ['content'=>$content]));
+        return $this->renderTemplate($layout, array_merge($data, ['content'=>$content]));
     }
 
     public function renderTemplate($template, $data = []){

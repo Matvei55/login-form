@@ -60,4 +60,12 @@ class Tags extends AbstractModel implements Model
         return $result;
     }
 
+    public function findByName (string $name): ?array
+    {
+        return $this->builder
+            ->table($this->table)
+            ->where('title', $name)
+            ->fetchOne();
+    }
+
 }
