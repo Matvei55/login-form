@@ -1,0 +1,53 @@
+<div class="posts-container">
+    <h1>Мои посты</h1>
+
+    <?php if (!empty($success)): ?>
+        <div class="success">✅ <?= htmlspecialchars($success) ?></div>
+    <?php endif; ?>
+
+    <div class="create-post">
+        <h2>Создать новый пост</h2>
+
+        <?php if (!empty($errors)): ?>
+            <div class="errors">
+                <?php foreach ($errors as $error): ?>
+                    <div>• <?= htmlspecialchars($error) ?></div>
+                <?php endforeach; ?>
+            </div>
+        <?php endif; ?>
+
+        <form method="post" action="/index.php?action=createPost&page=createPost">
+            <div class="form-group">
+                <label>Заголовок</label>
+                <input type="text" name="title" required>
+            </div>
+
+            <div class="form-group">
+                <label>Содержание</label>
+                <textarea name="content" rows="5"></textarea>
+            </div>
+
+            <div class="form-group">
+                <label>Теги (через пробел)</label>
+                <input type="text" name="tags">
+            </div>
+
+            <button type="submit">Создать пост</button>
+        </form>
+    </div>
+    <div class="user-posts">
+        <h2>Мои посты</h2>
+
+        <?php if (empty($userPosts)): ?>
+            <p>У вас пока нет постов. Создайте первый!</p>
+        <?php else: ?>
+            <?php foreach ($userPosts as $post): ?>
+                <div class="post">
+                    <h3><?= htmlspecialchars($post['title']) ?></h3>
+                    <p><?= nl2br(htmlspecialchars($post['content'])) ?></p>
+<!--                    <small>Создан: --><?php //= $post['created_at'] ?><!--</small>-->
+                </div>
+            <?php endforeach; ?>
+        <?php endif; ?>
+    </div>
+</div>

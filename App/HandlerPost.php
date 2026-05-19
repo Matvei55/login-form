@@ -29,7 +29,7 @@ if (empty($errors)) {
     $user = $userModel->load($_SESSION['user_id']);
 
     $postModel->setUser($user)
-        ->setData([
+             ->setData([
             'title' => $title,
             'content' => $content
         ]);
@@ -43,7 +43,7 @@ if (empty($errors)) {
             if ($existingTag) {
                 $tagId = $existingTag['id'];
             } else {
-                $tagId = $tagModel->setData(['name' => $tagName])->save();
+                $tagId = $tagModel->setData(['title' => $tagName])->save();
             }
             if ($tagId) {
                 $tagModel->builder->attachTag($postId, $tagId);

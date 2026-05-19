@@ -64,13 +64,12 @@ class Users extends AbstractModel implements Model
 
     public function getPosts(): array
     {
-        if($this->id){
+        if(!$this->id){
             return [];
         }
         return $this->builder
-            ->table($this->table)
+            ->table('posts')
             ->where('id', $this->id)
-            ->orderBy('created_at', 'DESC')
             ->fetchAll();
     }
 
@@ -80,7 +79,7 @@ class Users extends AbstractModel implements Model
             return 0;
         }
         return $this->builder
-            ->table($this->table)
+            ->table('posts')
             ->where('id', $this->id)
             ->count();
     }
@@ -91,9 +90,8 @@ class Users extends AbstractModel implements Model
             return [];
         }
         return $this->builder
-            ->table($this->table)
+            ->table('posts')
             ->where('id', $this->id)
-            ->orderBy('created_at', 'DESC')
             ->limit($limit)
             ->fetchAll();
     }
@@ -123,8 +121,17 @@ class Users extends AbstractModel implements Model
             return false;
         }
         return $this->builder
-            ->table($this->table)
+            ->table('posts')
             ->where('id', $this->id)
             ->delete();
+    }
+
+    public function findByName(string $name): ?array
+    {
+        $result = $this->builder
+            ->table($this->table)
+            ->where('name', $name)
+            ->fetchOne();
+        return $result ;
     }
 }

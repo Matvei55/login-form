@@ -1,41 +1,24 @@
 <?php
-namespace App;
-
 use App\Models\Users;
-
-$userModel = new Users();
-$username =trim($_POST['username'] ?? '');
-$password= $_POST['password'] ?? '';
+$username = trim($_POST['username'] ?? '');
+$password = $_POST['password'] ?? '';
 $errors = [];
-$success = null;
 
-if(empty($username)){
-    $errors[] = "имя пользователя надо заполнить";
-}elseif (mb_strlen($username) < 1){
-    $errors[] = "имя пользователя должно содержать не меньше одного символа";
-}elseif(mb_strlen($username) > 67){
-    $errors[]= "имя пользователя не должно быть меньше 67 символов";
-}
+if (empty($username) || empty($password)) {
+    $errors[]='заполните все поля';
+}else{
+    $userModel = new Users();
+    $user = $userModel->findByName($username);
 
-if(empty($password)){
-    $errors[] = "поля пароля обязательно для заполнения";
-}elseif (strlen($password) < 4){
-    $errors[]="пароль должен быть не меньше 4 символов";
-}
-
-if(empty($errors)){
-    $hashedPassword = password_hash($password, PASSWORD_DEFAULT);
-    $userId = $userModel->setData([
-        'name' => $username,
-        'password' => $hashedPassword,
-    ])->save();
-
-    if($userId){
-        $success= "Пользователь '{$username}' успешно создан!";
+    if ($user && password_verify($password, $user['password'])) {
+        $_SESSION['user_id'] = $user['id'];
+        $_SESSION['success'] = "добро подаловать , {$username}";
+        header('Location: /index.php?page=posts');
+        exit();
     }else{
-        $errors[] = 'не удалось создать пользователя';
+        $errors[] = 'неправильное имя пользователя и пароль';
     }
 }
-
-$_SESSION['userErrors'] = $errors;
-$_SESSION['userSuccess'] = $success;
+$_SESSION['errors'] = $errors;
+header('Location: /index.php?page=login');
+exit();

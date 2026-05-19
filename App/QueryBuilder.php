@@ -281,6 +281,15 @@ class QueryBuilder
 
     public function attachTag(int $postId, int $tagId): bool
     {
+        $checkSql = "SELECT 1 FROM post_tag WHERE post_id = :post_id AND tag_id = :tag_id";
+        $checkStmt = $this->pdo->prepare($checkSql);
+        $checkStmt->execute(['post_id' => $postId, 'tag_id' => $tagId]);
+
+        if ($checkStmt->fetch()) {
+            return true;  // уже есть, ничего не делаем
+        }
+
+        // Добавляем связь
         $sql = "INSERT INTO post_tag (post_id, tag_id) VALUES (:post_id, :tag_id)";
         $stmt = $this->pdo->prepare($sql);
         return $stmt->execute(['post_id' => $postId, 'tag_id' => $tagId]);

@@ -61,13 +61,21 @@ class Posts extends AbstractModel implements Model
     }
 
 
+//    public function setUser(Users $user): self
+//    {
+//        if ($user->getId() === null) {
+//            throw new \RuntimeException("пользователь не создан");
+//        }
+//        $this->user = $user;
+//        $this->data['user_id'] = $user->getId();
+//        return $this;
+//    }
+
     public function setUser(Users $user): self
     {
-        if ($user->getId() === null) {
-            throw new \RuntimeException("пользователь не создан");
-        }
-        $this->user = $user;
-        $this->data['user_id'] = $user->getId();
+        $userId = $user->getId();
+        error_log("setUser: user_id = " . $userId);
+        $this->data['user_id'] = $userId;
         return $this;
     }
 
@@ -146,7 +154,6 @@ class Posts extends AbstractModel implements Model
         return $this->builder
             ->table($this->table)
             ->where('user_id', $userId)
-            ->orderBy('created_at', 'DESC')
             ->fetchAll();
     }
 }
