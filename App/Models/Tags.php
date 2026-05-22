@@ -68,4 +68,40 @@ class Tags extends AbstractModel implements Model
             ->fetchOne();
     }
 
+    public function getPostTags(int $postId): array
+    {
+        return $this->builder
+            ->table($this->table)
+            ->select('tags.*')
+            ->join('post_tag', 'tags.id','=', 'post_tag.tag_id')
+            ->where('post_tag.post_id', $postId)
+            ->fetchAll();
+    }
+
+    public function attachTag (int $postId, int $tagId): bool
+    {
+        return $this->builder
+            ->table('post_tag')
+            ->insert([
+                'post_id' => $postId,
+                'tag_id' => $tagId
+            ]) !== false;
+    }
+
+    public function detachTag (int $postId, int $tagId): bool
+    {
+        return $this->builder
+            ->table('post_tag')
+            ->where('post_id', $postId)
+            ->where('tag_id', $tagId)
+            ->delete();
+    }
+
+    public function deleteAllPostTags(int $postId): bool
+    {
+        return $this->builder
+        ->table('post_tag')
+        ->where('post_id', $postId)
+        ->delete();
+    }
 }

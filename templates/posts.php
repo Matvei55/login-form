@@ -1,8 +1,8 @@
 <div class="posts-container">
-    <h1>Мои посты</h1>
+    <h1>посты</h1>
 
     <?php if (!empty($success)): ?>
-        <div class="success">✅ <?= htmlspecialchars($success) ?></div>
+        <div class="success"> <?= htmlspecialchars($success) ?></div>
     <?php endif; ?>
 
     <div class="create-post">
@@ -16,7 +16,7 @@
             </div>
         <?php endif; ?>
 
-        <form method="post" action="/index.php?action=createPost&page=createPost">
+        <form method="post" action="/index.php?action=createPost&page=posts">
             <div class="form-group">
                 <label>Заголовок</label>
                 <input type="text" name="title" required>
@@ -43,9 +43,24 @@
         <?php else: ?>
             <?php foreach ($userPosts as $post): ?>
                 <div class="post">
+                    <div class="post-header">
+                    <strong>Название:</strong>
                     <h3><?= htmlspecialchars($post['title']) ?></h3>
+                    </div>
+
+                    <div class="post-content">
+                    <strong>Контент:</strong>
                     <p><?= nl2br(htmlspecialchars($post['content'])) ?></p>
-<!--                    <small>Создан: --><?php //= $post['created_at'] ?><!--</small>-->
+                    </div>
+
+                    <?php if (!empty($post['tags'])): ?>
+                    <div class = 'post-tags'>
+                        <strong>Теги:</strong>
+                        <?php foreach ($post['tags'] as $tag): ?>
+                            <span class="tag"><?= htmlspecialchars($tag['title'])?></span>
+                        <?php endforeach; ?>
+                    </div>
+                    <?php endif; ?>
                 </div>
             <?php endforeach; ?>
         <?php endif; ?>

@@ -125,19 +125,12 @@ class QueryBuilder
     public function getSelectSQL(): array
     {
         $sql = $this->buildSelect();
-        if (!empty($this->joins)) {
-            $sql = str_replace(
-                "FROM {$this->table}",
-                "FROM {$this->table} " . implode(' ', $this->joins),
-                $sql
-            );
-        }
-
         $params = $this->params;
         $this->clear();
 
         return [$sql, $params];
     }
+
 
     public function getInsertSQL(array $data): array
     {
@@ -256,56 +249,5 @@ class QueryBuilder
         $this->limit = null;
         $this->offset = null;
         $this->joins = [];
-    }
-
-    public function getPostTags(int $postId): array
-    {
-        $sql = "SELECT tags.* FROM tags 
-            INNER JOIN post_tag ON tags.id = post_tag.tag_id 
-            WHERE post_tag.post_id = :post_id
-            ORDER BY tags.title ASC";
-
-        $stmt = $this->pdo->prepare($sql);
-        $stmt->execute(['post_id' => $postId]);
-
-        return $stmt->fetchAll(PDO::FETCH_ASSOC);
-    }
-
-    public function tagExists(int $postId, int $tagId): bool
-    {
-        $sql ="SELECT 1 FROM post_tag WHERE post_id = :post_id AND tag_id = :tag_id";
-        $stmt = $this->pdo->prepare($sql);
-        $stmt->execute(['post_id' => $postId, 'tag_id' => $tagId]);
-        return $stmt->fetch() !== false;
-    }
-
-    public function attachTag(int $postId, int $tagId): bool
-    {
-        $checkSql = "SELECT 1 FROM post_tag WHERE post_id = :post_id AND tag_id = :tag_id";
-        $checkStmt = $this->pdo->prepare($checkSql);
-        $checkStmt->execute(['post_id' => $postId, 'tag_id' => $tagId]);
-
-        if ($checkStmt->fetch()) {
-            return true;  // уже есть, ничего не делаем
-        }
-
-        // Добавляем связь
-        $sql = "INSERT INTO post_tag (post_id, tag_id) VALUES (:post_id, :tag_id)";
-        $stmt = $this->pdo->prepare($sql);
-        return $stmt->execute(['post_id' => $postId, 'tag_id' => $tagId]);
-    }
-
-    public function detachTag(int $postId, int $tagId): bool
-    {
-        $sql = "DELETE FROM post_tag WHERE post_id = :post_id AND tag_id = :tag_id";
-        $stmt = $this->pdo->prepare($sql);
-        return $stmt->execute(['post_id' => $postId, 'tag_id' => $tagId]);
-    }
-
-    public function deleteAllPostTags(int $postId): bool
-    {
-        $sql = "DELETE FROM post_tag WHERE post_id = :post_id";
-        $stmt = $this->pdo->prepare($sql);
-        return $stmt->execute(['post_id' => $postId]);
     }
 }

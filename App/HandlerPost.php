@@ -2,7 +2,6 @@
 use App\Models\Posts;
 use App\Models\Tags;
 use App\Models\Users;
-use App\QueryBuilder;
 
 if (!isset($_SESSION['user_id'])) {
     header("Location: /index.php?page=login");
@@ -46,7 +45,7 @@ if (empty($errors)) {
                 $tagId = $tagModel->setData(['title' => $tagName])->save();
             }
             if ($tagId) {
-                $tagModel->builder->attachTag($postId, $tagId);
+                $tagModel->attachTag($postId, $tagId);
             }
         }
     }

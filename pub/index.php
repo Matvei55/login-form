@@ -4,10 +4,12 @@ session_start();
 use App\Render;
 use App\Models\Posts;
 use App\Models\Users;
+use App\Models\Tags;
 
 $page = $_GET['page'] ?? 'login';
 $postModel = new Posts();
 $userModel = new Users();
+$tagModel = new Tags();
 
 if ($_SERVER['REQUEST_METHOD'] == 'POST') {
     $action = $_GET['action'] ?? '';
@@ -32,6 +34,10 @@ $success = $_SESSION['success'] ?? [];
 if (isset($_SESSION['user_id'])) {
     $user = $userModel->load($_SESSION['user_id'])->getData();
     $userPosts = $postModel->getPostsByUser($_SESSION['user_id']);
+
+    foreach ($userPosts as &$post) {
+        $post['tags'] = $tagModel->getPostTags($post['id']);
+    }
 }
 
 
@@ -42,7 +48,7 @@ $data = [
     'user' => $user,
     'userPosts' => $userPosts,
     'errors' => $errors,
-    'success' => $success,
+    'success' => $success
 ];
 
 echo $render->render($page, $data);
