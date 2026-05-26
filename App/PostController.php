@@ -1,65 +1,75 @@
 <?php
+namespace App;
 use App\Models\Posts;
 use App\Models\Tags;
 use App\Models\Users;
 
-if (!isset($_SESSION['user_id'])) {
-    header("Location: /index.php?page=login");
-    exit();
-}
+class PostController
+{
+    private Posts $postModel;
+    private Users $userModel;
+    private Tags $tagModel;
 
-$postModel = new Posts();
-$tagModel = new Tags();
-$userModel = new Users();
+    public function __construct()
+    {
+        $this->postModel = new Posts();
+        $this->userModel = new Users();
+        $this->tagModel = new Tags();
+    }
 
-$title = trim($_POST['title'] ?? '');
-$content = trim($_POST['content'] ?? '');
-$tagsInput = trim($_POST['tags'] ?? '');
-$errors = [];
+    public function createPost(array $postData): void
+    {
+        if(!isset($_SESSION['user_id'])) {
+            $this->redirect('/index.php?page=login');
+            return;
+        }
+        $title = trim($postData['title'] ?? '');
+        $content = trim($postData['content'] ?? '');
+        $tagsInput = trim($postData['tags'] ?? '');
+        $errors = [];
 
-if (empty($title)) {
-    $errors[] = 'Заголовок обязателен';
-} elseif (mb_strlen($title) < 3) {
-    $errors[] = 'Заголовок минимум 3 символа';
-}
+        if(empty($title)) {
+            $errors[] = 'заголовок обязателен';
+        }elseif (mb_strlen($title) < 3) {
+            $errors[] = 'заголовок минимум 3 символа';
+        }
 
-if (empty($errors)) {
-    // Получаем пользователя
-    $user = $userModel->load($_SESSION['user_id']);
+        if(empty($errors)) {
+            $user = $this->userModel->load($_SESSION['user_id']);
+            $postIg = $this->postModel->setUser($user)
+                ->setData([
+                    'title' => $title,
+                    'content' => $content
+                ])->save();
+            if($postIg && !empty($tagsInput)) {
+                $tagNames = array_unique(array_filter(explode(' ', $tagsInput)));
+                foreach ($tagNames as $tagName) {
+                    $existingTag = $this->tagModel->findByName($tagName);
+                    if($existingTag) {
+                        $tagId = $existingTag['id'];
+                    }else {
+                        $tagId = $this->tagModel->setData(['title' => $tagName])->save();
+                    }
 
-    $postModel->setUser($user)
-             ->setData([
-            'title' => $title,
-            'content' => $content
-        ]);
-
-    $postId = $postModel->save();
-
-    if ($postId && !empty($tagsInput)) {
-        $tagNames = array_unique(array_filter(explode(' ', $tagsInput)));
-        foreach ($tagNames as $tagName) {
-            $existingTag = $tagModel->findByName($tagName);
-            if ($existingTag) {
-                $tagId = $existingTag['id'];
-            } else {
-                $tagId = $tagModel->setData(['title' => $tagName])->save();
+                    if($tagId){
+                        $this->tagModel->attachTag($postIg, $tagId);
+                    }
+                }
             }
-            if ($tagId) {
-                $tagModel->attachTag($postId, $tagId);
+            if($postIg) {
+                $_SESSION['success'] = "пост успешно создан";
+            }else{
+                $errors[] = "не удалось создать пост";
             }
+            if(!empty($errors)) {
+                $_SESSION['errors'] = $errors;
+            }
+            $this->redirect('/index.php?page=posts');
         }
     }
-
-    if ($postId) {
-        $_SESSION['success'] = "Пост '{$title}' успешно создан!";
-    } else {
-        $errors[] = 'Не удалось создать пост';
+    private function redirect(string $url): void
+    {
+        header("Location: {$url}");
+        exit;
     }
 }
-
-if (!empty($errors)) {
-    $_SESSION['errors'] = $errors;
-}
-
-header("Location: /index.php?page=posts");
-exit();
