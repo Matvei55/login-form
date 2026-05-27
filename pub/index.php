@@ -42,7 +42,7 @@ $success = $_SESSION['success'] ?? [];
 
 if(isset($_SESSION['user_id'])) {
     $user = $userModel->load($_SESSION['user_id'])->getData();
-    $userPosts = $postModel->getPostsByUser($_SESSION['user_id']);
+    $userPosts = $postModel->getPostsByUserId($_SESSION['user_id']);
 
     foreach ($userPosts as &$post) {
         $post['tags'] = $tagModel->getPostTags($post['id']);

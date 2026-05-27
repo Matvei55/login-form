@@ -1,12 +1,13 @@
 <?php
 namespace App\Models;
-
+use App\Models\Tags;
 class Posts extends AbstractModel implements Model
 {
     private string $table = 'posts';
     private ?Users $user = null;
     private array $tags = [];
 
+    private Tags $tag;
 
     public function save()
     {
@@ -61,16 +62,6 @@ class Posts extends AbstractModel implements Model
     }
 
 
-//    public function setUser(Users $user): self
-//    {
-//        if ($user->getId() === null) {
-//            throw new \RuntimeException("пользователь не создан");
-//        }
-//        $this->user = $user;
-//        $this->data['user_id'] = $user->getId();
-//        return $this;
-//    }
-
     public function setUser(Users $user): self
     {
         $userId = $user->getId();
@@ -94,10 +85,10 @@ class Posts extends AbstractModel implements Model
         $postId = $this->getId();
 
         if($postId) {
-            $this->builder->deleteAllPostTags($postId);
+            $this->tag->deleteAllPostTags($postId);
 
             foreach ($tags as $tag) {
-                $this->builder->attachTag($postId, $tag->getId());
+                $this->tag->attachTag($postId, $tag->getId());
             }
             $this->clearTagsCache();
         }
@@ -114,8 +105,8 @@ class Posts extends AbstractModel implements Model
     {
        $postId = $this->getId();
        $tagId = $tag->getId();
-       if($postId && $tagId && !$this->builder->tagExists($postId, $tagId)) {
-           $this->builder->attachTag($postId, $tagId);
+       if($postId && $tagId && !$this->tag->tagExists($postId, $tagId)) {
+           $this->tag->attachTag($postId, $tagId);
            $this->clearTagsCache();
        }
        return $this;
@@ -124,7 +115,7 @@ class Posts extends AbstractModel implements Model
     public function getTags(): array
     {
         if($this->tags == null) {
-            $tagsData = $this->builder->getPostTags($this->getId());
+            $tagsData = $this->tag->getPostTags($this->getId());
             $tagsList = [];
 
             foreach ($tagsData as $tagData) {
@@ -149,7 +140,8 @@ class Posts extends AbstractModel implements Model
         return $titles;
     }
 
-    public function getPostsByUser(int $userId): array
+    //функция должна возращать массив с моделями экзеипляра класса пост
+    public function getPostsByUserId(int $userId): array
     {
         return $this->builder
             ->table($this->table)

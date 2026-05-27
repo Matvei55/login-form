@@ -104,4 +104,16 @@ class Tags extends AbstractModel implements Model
         ->where('post_id', $postId)
         ->delete();
     }
+
+    public function tagExists(int $postId, int $tagId): bool
+{
+    $result = $this->builder
+        ->table('post_tag')
+        ->select('1')
+        ->where('post_id', $postId)
+        ->where('tag_id', $tagId)
+        ->fetchOne();
+
+    return $result !== null;
+}
 }
