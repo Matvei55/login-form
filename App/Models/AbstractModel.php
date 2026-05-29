@@ -38,6 +38,13 @@ abstract class AbstractModel
         return $this->data['id'] ?? null;
     }
 
+    public function setId(int $id): self
+    {
+    $this->id = $id;
+    $this->data['id'] = $id;
+    return $this;
+    }
+
     protected function saveAfter():void
     {
 

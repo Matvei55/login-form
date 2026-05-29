@@ -77,43 +77,16 @@ class Tags extends AbstractModel implements Model
             ->where('post_tag.post_id', $postId)
             ->fetchAll();
     }
-
-    public function attachTag (int $postId, int $tagId): bool
-    {
-        return $this->builder
-            ->table('post_tag')
-            ->insert([
-                'post_id' => $postId,
-                'tag_id' => $tagId
-            ]) !== false;
-    }
-
-    public function detachTag (int $postId, int $tagId): bool
-    {
-        return $this->builder
-            ->table('post_tag')
-            ->where('post_id', $postId)
-            ->where('tag_id', $tagId)
-            ->delete();
-    }
-
-    public function deleteAllPostTags(int $postId): bool
-    {
-        return $this->builder
-        ->table('post_tag')
-        ->where('post_id', $postId)
-        ->delete();
-    }
-
-    public function tagExists(int $postId, int $tagId): bool
+    public function findOrCreate(string $name): int
 {
-    $result = $this->builder
-        ->table('post_tag')
-        ->select('1')
-        ->where('post_id', $postId)
-        ->where('tag_id', $tagId)
-        ->fetchOne();
+    // Ищем существующий тег
+    $existing = $this->findByName($name);
+    if ($existing) {
+        return $existing['id'];
+    }
 
-    return $result !== null;
+    // Создаём новый
+    $id = $this->setData(['title' => $name])->save();
+    return $id;
 }
 }

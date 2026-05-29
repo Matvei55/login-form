@@ -3,7 +3,7 @@ namespace App;
 use App\QueryBuilder;
 use App\Models\Users;
 
-class Render{
+class View{
 
     private $templatePath;
 

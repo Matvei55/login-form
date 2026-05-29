@@ -239,7 +239,7 @@ class QueryBuilder
         return [$sql, $params];
     }
 
-    private function clear() //очистка состояния
+    public function clear() //очистка состояния
     {
         $this->table = null;
         $this->fields = ['*'];
@@ -249,5 +249,6 @@ class QueryBuilder
         $this->limit = null;
         $this->offset = null;
         $this->joins = [];
+        return $this;
     }
 }

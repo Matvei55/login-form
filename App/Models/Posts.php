@@ -9,6 +9,11 @@ class Posts extends AbstractModel implements Model
 
     private Tags $tag;
 
+    public function __construct()
+    {
+        parent::__construct();
+        $this->tag = new Tags();
+    }
     public function save()
     {
         if ($this->id !== null) {
@@ -103,13 +108,13 @@ class Posts extends AbstractModel implements Model
 
     public function addTag(Tags $tag): self
     {
-       $postId = $this->getId();
-       $tagId = $tag->getId();
-       if($postId && $tagId && !$this->tag->tagExists($postId, $tagId)) {
-           $this->tag->attachTag($postId, $tagId);
-           $this->clearTagsCache();
-       }
-       return $this;
+        $postId = $this->getId();
+        $tagId = $tag->getId();
+        if($postId && $tagId && !$this->tag->tagExists($postId, $tagId)) {
+            $this->tag->attachTag($postId, $tagId);
+            $this->clearTagsCache();
+        }
+        return $this;
     }
 
     public function getTags(): array
@@ -134,8 +139,8 @@ class Posts extends AbstractModel implements Model
         $titles = [];
 
         foreach ($tags as $tag) {
-        $data = $tag->getData();
-        $titles[] = $data['title'];
+            $data = $tag->getData();
+            $titles[] = $data['title'];
         }
         return $titles;
     }
@@ -148,6 +153,50 @@ class Posts extends AbstractModel implements Model
             ->where('user_id', $userId)
             ->fetchAll();
     }
+
+    public function attachTag (int $postId, int $tagId): bool
+    {
+        if ($this->tagExists($postId, $tagId)) {
+            return true;
+        }
+        return $this->builder
+                ->table('post_tag')
+                ->insert([
+                    'post_id' => $postId,
+                    'tag_id' => $tagId
+                ]) !== false;
+    }
+
+    public function detachTag (int $postId, int $tagId): bool
+    {
+        return $this->builder
+            ->table('post_tag')
+            ->where('post_id', $postId)
+            ->where('tag_id', $tagId)
+            ->delete();
+    }
+
+    public function deleteAllPostTags(int $postId): bool
+    {
+        return $this->builder
+            ->table('post_tag')
+            ->where('post_id', $postId)
+            ->delete();
+    }
+
+    public function tagExists(int $postId, int $tagId): bool
+    {
+        $result = $this->builder
+            ->clear()
+            ->table('post_tag')
+            ->select('1')
+            ->where('post_id', $postId)
+            ->where('tag_id', $tagId)
+            ->fetchOne();
+
+        return $result !== null;
+    }
+
 }
 
 
