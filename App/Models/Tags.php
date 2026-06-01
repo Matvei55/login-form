@@ -70,23 +70,38 @@ class Tags extends AbstractModel implements Model
 
     public function getPostTags(int $postId): array
     {
-        return $this->builder
+        $tagsData=$this->builder
             ->table($this->table)
             ->select('tags.*')
             ->join('post_tag', 'tags.id','=', 'post_tag.tag_id')
             ->where('post_tag.post_id', $postId)
             ->fetchAll();
+        $tags = [];
+        foreach ($tagsData as $data) {
+            $tag = new Tags();
+            $tag->setData($data);
+            $tag->setId($data['id']);
+            $tags[] = $tag;
+        }
+        return $tags;
     }
-    public function findOrCreate(string $name): int
-{
-    // Ищем существующий тег
-    $existing = $this->findByName($name);
+    public function findOrCreate(string $name): Tags
+    {
+           $existing = $this->findByName($name);
     if ($existing) {
-        return $existing['id'];
+        $tag = new Tags();
+        $tag->setData($existing);
+        $tag->setId($existing['id']);
+        return $tag;
     }
 
-    // Создаём новый
-    $id = $this->setData(['title' => $name])->save();
-    return $id;
-}
+    $tag = new Tags();
+    $tag->setData(['title' => $name]);
+    $tag->save();
+    return $tag;
+    }
+    public function getTitle(): string
+    {
+        return $this->data['title'] ?? '';
+    }
 }

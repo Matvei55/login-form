@@ -117,19 +117,22 @@
                 <div class="post">
                     <div class="post-header">
                     <strong>Название:</strong>
-                    <h3><?= htmlspecialchars($post['title']) ?></h3>
+                    <h3><?= htmlspecialchars($post->getTitle()) ?></h3>
                     </div>
 
                     <div class="post-content">
                     <strong>Контент:</strong>
-                    <p><?= nl2br(htmlspecialchars($post['content'])) ?></p>
+                    <p><?= nl2br(htmlspecialchars($post->getContent())) ?></p>
                     </div>
 
-                    <?php if (!empty($post['tags'])): ?>
+                    <?php
+                    $tags = $post->getTags();
+                    if (!empty($tags)):
+                        ?>
                     <div class = 'post-tags'>
                         <strong>Теги:</strong>
-                        <?php foreach ($post['tags'] as $tag): ?>
-                            <span class="tag"><?= htmlspecialchars($tag['title'])?></span>
+                        <?php foreach ($post->getTags() as $tag): ?>
+                            <span class="tag"><?= htmlspecialchars($tag->getTitle())?></span>
                         <?php endforeach; ?>
                     </div>
                     <?php endif; ?>

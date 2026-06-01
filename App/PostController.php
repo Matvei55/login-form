@@ -104,11 +104,9 @@ class PostController
 
             foreach ($tagNames as $tagName) {
                 // ✅ Ищем или создаём тег
-                $tagId = $this->tagModel->findOrCreate($tagName);
-
-                if ($tagId) {
-                    $this->postModel->attachTag($postId, $tagId);
-                }
+                $tag = $this->tagModel->findOrCreate($tagName);
+                
+                    $this->postModel->attachTag($tag);
             }
         }
 

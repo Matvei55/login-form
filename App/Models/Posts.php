@@ -85,15 +85,15 @@ class Posts extends AbstractModel implements Model
         return $this->user;
     }
 
-    public function setTag(array $tags): self
+    public function setTags(array $tags): self
     {
         $postId = $this->getId();
 
         if($postId) {
-            $this->tag->deleteAllPostTags($postId);
+            $this->deleteAllPostTags();
 
             foreach ($tags as $tag) {
-                $this->tag->attachTag($postId, $tag->getId());
+                $this->attachTag($tag);
             }
             $this->clearTagsCache();
         }
@@ -110,8 +110,8 @@ class Posts extends AbstractModel implements Model
     {
         $postId = $this->getId();
         $tagId = $tag->getId();
-        if($postId && $tagId && !$this->tag->tagExists($postId, $tagId)) {
-            $this->tag->attachTag($postId, $tagId);
+        if($postId && $tagId && !$this->tagExists($tag)) {
+            $this->attachTag($tag);
             $this->clearTagsCache();
         }
         return $this;
@@ -119,16 +119,8 @@ class Posts extends AbstractModel implements Model
 
     public function getTags(): array
     {
-        if($this->tags == null) {
-            $tagsData = $this->tag->getPostTags($this->getId());
-            $tagsList = [];
-
-            foreach ($tagsData as $tagData) {
-                $tag = new Tags();
-                $tag->setData($tagData);
-                $tagsList[] = $tag;
-            }
-            $this->tags = $tagsList;
+        if (empty($this->tags)) {
+            $this->tags = $this->tag->getPostTags($this->getId());
         }
         return $this->tags;
     }
@@ -146,29 +138,51 @@ class Posts extends AbstractModel implements Model
     }
 
     //функция должна возращать массив с моделями экзеипляра класса пост
-    public function getPostsByUserId(int $userId): array
+    public function getPostsByUserId(Users $user): array
     {
-        return $this->builder
+        $postsData = $this->builder
             ->table($this->table)
-            ->where('user_id', $userId)
+            ->where('user_id', $user->getId())
             ->fetchAll();
+
+        $posts = [];
+        foreach ($postsData as $data) {
+            $post = new Posts();
+            $post->setData($data);
+            $post->setId($data['id']);
+            $posts[] = $post;
+        }
+        return $posts;
     }
 
-    public function attachTag (int $postId, int $tagId): bool
+    public function attachTag(Tags $tag): bool
     {
-        if ($this->tagExists($postId, $tagId)) {
+        $postId = $this->getId();
+        $tagId = $tag->getId();
+
+        if (!$postId || !$tagId) {
+            return false;
+        }
+
+        if($this->tagExists($tag)) {
             return true;
         }
+
         return $this->builder
-                ->table('post_tag')
-                ->insert([
-                    'post_id' => $postId,
-                    'tag_id' => $tagId
-                ]) !== false;
+            ->table('post_tag')
+            ->insert([
+                'post_id' => $postId,
+                'tag_id' => $tagId
+            ]) !== false;
     }
 
-    public function detachTag (int $postId, int $tagId): bool
+    public function detachTag (Tags $tag): bool
     {
+        $postId = $this->getId();
+        $tagId = $tag->getId();
+        if(!$postId || !$tagId) {
+            return false;
+        }
         return $this->builder
             ->table('post_tag')
             ->where('post_id', $postId)
@@ -176,16 +190,26 @@ class Posts extends AbstractModel implements Model
             ->delete();
     }
 
-    public function deleteAllPostTags(int $postId): bool
+    public function deleteAllPostTags(): bool
     {
+        $postId = $this->getId();
+        if(!$postId) {
+            return false;
+        }
         return $this->builder
             ->table('post_tag')
             ->where('post_id', $postId)
             ->delete();
     }
 
-    public function tagExists(int $postId, int $tagId): bool
+    public function tagExists(Tags $tag): bool
     {
+        $postId = $this->getId();
+        $tagId = $tag->getId();
+
+        if (!$postId || !$tagId) {
+            return false;
+        }
         $result = $this->builder
             ->clear()
             ->table('post_tag')
@@ -195,6 +219,16 @@ class Posts extends AbstractModel implements Model
             ->fetchOne();
 
         return $result !== null;
+    }
+
+    public function getTitle(): string
+    {
+        return $this->data['title'] ?? '';
+    }
+
+    public function getContent(): string
+    {
+        return $this->data['content'] ?? '';
     }
 
 }

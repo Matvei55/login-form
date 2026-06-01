@@ -41,11 +41,12 @@ $errors  = $_SESSION['errors'] ?? [];
 $success = $_SESSION['success'] ?? [];
 
 if(isset($_SESSION['user_id'])) {
-    $user = $userModel->load($_SESSION['user_id'])->getData();
-    $userPosts = $postModel->getPostsByUserId($_SESSION['user_id']);
+    $user = $userModel->load($_SESSION['user_id']);
+    $userPosts = $postModel->getPostsByUserId($user);
 
     foreach ($userPosts as &$post) {
-        $post['tags'] = $tagModel->getPostTags($post['id']);
+        $tags = $tagModel->getPostTags($post->getId());
+        $post->setTags($tags);
     }
 }
 
