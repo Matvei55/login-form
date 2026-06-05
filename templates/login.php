@@ -9,7 +9,7 @@
         </div>
     <?php endif; ?>
 
-    <form method="post" action="/index.php?action=login&page=login">
+    <form method="post" action="/login">
         <div class="form-group">
             <label>Имя пользователя</label>
             <input type="text" name="username" required>
@@ -23,5 +23,5 @@
         <button type="submit">Войти</button>
     </form>
 
-    <p>Нет аккаунта? <a href="/index.php?page=register">Зарегистрироваться</a></p>
+    <p>Нет аккаунта? <a href="/register">Зарегистрироваться</a></p>
 </div>

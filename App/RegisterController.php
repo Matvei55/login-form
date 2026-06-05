@@ -5,55 +5,59 @@ use App\Models\Users;
 class RegisterController
 {
     private Users $userModel;
+    private View $view;
 
     public function __construct()
     {
         $this->userModel = new Users();
+        $this->view = new View();
     }
 
-    public function register(array $postData): void
+    public function showRegister(): void
     {
-        $username = trim($postData['username'] ?? '');
-        $password = $postData['password'] ?? '';
+        $data = [
+            'errors' => $_SESSION['errors'] ?? [],
+            'success' => $_SESSION['success'] ?? [],
+        ];
+
+        echo $this->view->render('register', $data);
+        unset($_SESSION['errors'], $_SESSION['success']);
+    }
+
+    public function register(): void
+    {
+        $username = trim($_POST['username'] ?? '');
+        $password = $_POST['password'] ?? '';
         $errors = [];
-
         if (empty($username)) {
-            $errors[] = 'Имя пользователя обязательно';
-        } elseif (mb_strlen($username) < 3) {
-            $errors[] = 'Имя пользователя минимум 3 символа';
-        } elseif (mb_strlen($username) > 67) {
-            $errors[] = 'Имя пользователя не должно превышать 67 символов';
+            $errors[] = "имя пользователя обязательно";
+        }elseif (mb_strlen($username) > 67) {
+            $errors[] = "имя пользователя имя пользователя не должно быть больше 67 символов";
+        }elseif (mb_strlen($username) < 3) {
+            $errors[] = 'имя пользователя должно быть минимум 3 символа';
         }
-
         if (empty($password)) {
-            $errors[] = 'Пароль надо заполнить';
-        } elseif (strlen($password) < 4) {
-            $errors[] = 'Пароль минимум 4 символа';
+            $errors[] = 'пароль обязателен';
+        }elseif (mb_strlen($password) < 2) {
+            $errors[] = 'пароль должен быть минимум 2 символа';
         }
-
         if (empty($errors)) {
             $hashedPassword = password_hash($password, PASSWORD_DEFAULT);
             $userId = $this->userModel->setData([
-                'name' => $username,
-                'password' => $hashedPassword
+                'username' => $username,
+                'password' => $hashedPassword,
             ])->save();
-
-            if ($userId) {
-                $_SESSION['user_id'] = $userId;
-                $_SESSION['success'] = "Регистрация прошла успешно! Добро пожаловать, {$username}!";
-                $this->redirect('/index.php?page=posts');
-                return;
-            } else {
-                $errors[] = 'Пользователь с таким именем уже существует';
-            }
+        }
+        if($userId) {
+            $_SESSION['user_id'] = $userId;
+            $_SESSION['success'] = "добро пожаловать, {$username}";
+            header('Location: /posts');
+            exit();
+        }else {
+            $errors[] = 'пользователь с таким именем уже существует';
         }
         $_SESSION['errors'] = $errors;
-        $this->redirect('/index.php?page=register');
-    }
-
-    private function redirect(string $url): void
-    {
-        header("Location: {$url}");
+        header('Location: /register');
         exit();
     }
 }
