@@ -14,21 +14,21 @@ class LoginController
         $this->view = new View();
     }
 
-    public function showLogin(): void
+    public function showLogin(Request $request): void
     {
         $data = [
             'errors' => $_SESSION['errors'] ?? [],
-            'success' => $_SESSION['success'] ?? [],
+            'success' => $_SESSION['success'] ?? '',
         ];
 
         echo $this->view->render('login', $data);
         unset($_SESSION['errors'], $_SESSION['success']);
     }
 
-    public function login(): void
+    public function login(Request $request): void
     {
-        $username = trim($_POST['username'] ?? '');
-        $password = $_POST['password'] ?? '';
+        $username = trim($request->post()->getString('username', ''));
+        $password = $request->post()->get('password', '');
         $errors = [];
 
         if (empty($username) || empty($password)) {
@@ -49,7 +49,7 @@ class LoginController
         exit();
     }
 
-    public function logout(): void
+    public function logout(Request $request): void
     {
         session_destroy();
         header('Location: /login');

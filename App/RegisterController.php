@@ -13,28 +13,28 @@ class RegisterController
         $this->view = new View();
     }
 
-    public function showRegister(): void
+    public function showRegister(Request $request): void
     {
         $data = [
             'errors' => $_SESSION['errors'] ?? [],
-            'success' => $_SESSION['success'] ?? [],
+            'success' => $_SESSION['success'] ?? '',
         ];
 
         echo $this->view->render('register', $data);
         unset($_SESSION['errors'], $_SESSION['success']);
     }
 
-    public function register(): void
+    public function register(Request $request): void
     {
-        $username = trim($_POST['username'] ?? '');
-        $password = $_POST['password'] ?? '';
+        $username = trim($request->post()->getString('username', ''));
+        $password = $request->post()->get('password', '');
         $errors = [];
         if (empty($username)) {
             $errors[] = "имя пользователя обязательно";
-        }elseif (mb_strlen($username) > 67) {
-            $errors[] = "имя пользователя имя пользователя не должно быть больше 67 символов";
-        }elseif (mb_strlen($username) < 3) {
-            $errors[] = 'имя пользователя должно быть минимум 3 символа';
+        }elseif (mb_strlen($username) <3) {
+            $errors[] = "имя пользователя должно быть минимум 3 символа";
+        }elseif (mb_strlen($username) >67) {
+            $errors[] = 'имя пользователя имя пользователя не должно быть больше 67 символов"';
         }
         if (empty($password)) {
             $errors[] = 'пароль обязателен';
@@ -44,7 +44,7 @@ class RegisterController
         if (empty($errors)) {
             $hashedPassword = password_hash($password, PASSWORD_DEFAULT);
             $userId = $this->userModel->setData([
-                'username' => $username,
+                'name' => $username,
                 'password' => $hashedPassword,
             ])->save();
         }
