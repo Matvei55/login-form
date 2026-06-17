@@ -14,7 +14,7 @@ class LoginController
         $this->view = new View();
     }
 
-    public function showLogin(Request $request): void
+    public function index(Request $request): void
     {
         $data = [
             'errors' => $_SESSION['errors'] ?? [],

@@ -13,7 +13,7 @@ class RegisterController
         $this->view = new View();
     }
 
-    public function showRegister(Request $request): void
+    public function index(Request $request): void
     {
         $data = [
             'errors' => $_SESSION['errors'] ?? [],
@@ -24,7 +24,7 @@ class RegisterController
         unset($_SESSION['errors'], $_SESSION['success']);
     }
 
-    public function register(Request $request): void
+    public function store(Request $request): void
     {
         $username = trim($request->post()->getString('username', ''));
         $password = $request->post()->get('password', '');
