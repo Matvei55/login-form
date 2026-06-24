@@ -9,7 +9,7 @@
         </div>
     <?php endif; ?>
 
-    <form method="post" action="/login">
+    <form method="post" action="/login/store">
         <div class="form-group">
             <label>Имя пользователя</label>
             <input type="text" name="username" required>

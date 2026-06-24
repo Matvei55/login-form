@@ -16,7 +16,7 @@
             </div>
         <?php endif; ?>
 
-        <form method="post" action="/posts">
+        <form method="post" action="/posts/store">
             <div class="form-group">
                 <label>Заголовок</label>
                 <input type="text" name="title" required>

@@ -52,12 +52,12 @@ class Request
         return strtoupper($this->method) === strtoupper($method);
     }
 
-    public function isGet(string $uri):bool
+    public function isGet():bool
     {
         return $this->isMethod('GET');
     }
 
-    public function isPost(string $uri):bool
+    public function isPost():bool
     {
         return $this->isMethod('POST');
     }

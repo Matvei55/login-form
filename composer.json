@@ -1,0 +1,16 @@
+{
+    "name": "my-blog/app",
+    "description": "Simple blog with autoload",
+    "type": "project",
+    "require": {
+        "php": ">=7.4"
+    },
+    "autoload": {
+        "psr-4": {
+            "App\\": "App/"
+        }
+    },
+    "config": {
+        "optimize-autoloader": true
+    }
+}

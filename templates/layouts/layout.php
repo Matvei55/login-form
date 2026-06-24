@@ -2,7 +2,7 @@
 <html>
 <head>
     <link rel="stylesheet" href="/styles.css">
-    <title> tempaltes</title>
+    <title>FORM LOGIN</title>
 </head>
 <body>
 <?= $content ?>

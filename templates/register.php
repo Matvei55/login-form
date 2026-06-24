@@ -13,7 +13,7 @@
         <div class="success">✅ <?= htmlspecialchars($success) ?></div>
     <?php endif; ?>
 
-    <form method="post" action="/register">
+    <form method="post" action="/register/store">
         <div class="form-group">
             <label>Имя пользователя</label>
             <input type="text" name="username" required>

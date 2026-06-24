@@ -25,10 +25,10 @@ class LoginController
         unset($_SESSION['errors'], $_SESSION['success']);
     }
 
-    public function login(Request $request): void
+    public function store(Request $request): void
     {
         $username = trim($request->post()->getString('username', ''));
-        $password = $request->post()->get('password', '');
+        $password = trim($request->post()->get('password', ''));
         $errors = [];
 
         if (empty($username) || empty($password)) {
