@@ -1,8 +1,10 @@
 <?php
-namespace App;
+namespace Controllers;
 use App\Models\Posts;
 use App\Models\Tags;
 use App\Models\Users;
+use Core\Request;
+use Core\View;
 
 class PostsController
 {

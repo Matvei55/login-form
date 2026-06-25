@@ -1,7 +1,10 @@
 <?php
-namespace App;
+namespace Controllers;
 
 use App\Models\Users;
+use Core\Request;
+use Core\View;
+
 class RegisterController
 {
     private Users $userModel;
