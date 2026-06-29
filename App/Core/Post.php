@@ -1,13 +1,14 @@
 <?php
-namespace Core;
-class Get
+namespace App\Core;
+
+class Post
 {
     private array $params;
+
     public function __construct()
     {
-        $this->params = $_GET;
+        $this->params = $_POST;
     }
-
 
     public function get(string $key, $default = null): mixed
     {
@@ -19,18 +20,21 @@ class Get
         return $this->params;
     }
 
-    public function has(string $key): bool
+    public function has(string $key): bool //существует ли параметр с таким ключом
     {
         return isset($this->params[$key]);
     }
 
-    public function getInt(string $key, int $default = 0): int
+    public function getInt(string $key, int $default = 0): int //преобразовываю значение в целое число
     {
         return (int)($this->params[$key] ?? $default);
     }
 
-    public function getString(string $key, string $default = ''): string
+    public function getString(string $key, string $default = ''): string //получение строки
     {
         return trim(htmlspecialchars($this->params[$key] ?? $default));
     }
+    
+
+
 }

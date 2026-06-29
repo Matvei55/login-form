@@ -1,9 +1,9 @@
 <?php
-namespace Controllers;
+namespace App\Controllers;
 
+use App\Core\Request;
+use App\Core\View;
 use App\Models\Users;
-use Core\Request;
-use Core\View;
 
 class RegisterController
 {

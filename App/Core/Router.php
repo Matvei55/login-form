@@ -1,6 +1,5 @@
 <?php
-namespace Core;
-
+namespace App\Core;
 class Router
 {
     public function dispatch(Request $request): void
@@ -18,7 +17,7 @@ class Router
             $action = $parts[1] ?? 'index';
             $params = array_slice($parts, 2);
         }
-        $controllerClass = '\\App\\' . $controllerName;
+        $controllerClass = '\\App\\Controllers\\' . $controllerName;
 
         if(!class_exists($controllerClass)) {
             $this->notFound();
