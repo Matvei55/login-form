@@ -66,7 +66,7 @@ class Users extends AbstractModel implements Model
         }
         return $this->builder
             ->table('posts')
-            ->where('id', $this->id)
+            ->where('user_id', $this->id)
             ->fetchAll();
     }
 
@@ -77,7 +77,7 @@ class Users extends AbstractModel implements Model
         }
         return $this->builder
             ->table('posts')
-            ->where('id', $this->id)
+            ->where('user_id', $this->id)
             ->count();
     }
 
@@ -88,7 +88,7 @@ class Users extends AbstractModel implements Model
         }
         return $this->builder
             ->table('posts')
-            ->where('id', $this->id)
+            ->where('user_id', $this->id)
             ->limit($limit)
             ->fetchAll();
     }
@@ -119,7 +119,7 @@ class Users extends AbstractModel implements Model
         }
         return $this->builder
             ->table('posts')
-            ->where('id', $this->id)
+            ->where('user_id', $this->id)
             ->delete();
     }
 

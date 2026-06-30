@@ -42,7 +42,7 @@ abstract class Controller
         if($this->session->has('user_id')){
             $userId = $this->session->getUserId();
             $userModel = new Users();
-            return $userModel->load('userId')->getData();
+            return $userModel->load($userId)->getData();
         }
         return null;
     }
@@ -59,12 +59,19 @@ abstract class Controller
 
     protected function setSuccess(string $success): void
     {
-        $_SESSION['success'][] = $success;
+        $_SESSION['success'] = $success;
     }
 
-    protected function getSuccess(): string
+    protected function getSuccess(): ?string
     {
-        return $_SESSION['success'] ?? '';
+        $value = $_SESSION['success'] ?? null;
+        if(empty($value)){
+            return null;
+        }
+        if(is_array($value)){
+            return implode(',', $value);
+        }
+        return (string)$value;
     }
 
     protected function clearSession(): void
@@ -90,5 +97,10 @@ abstract class Controller
     protected function isGet(): bool
     {
         return $this->request->isGet();
+    }
+
+    protected function hasErrors(): bool
+    {
+        return !empty($this->getErrors());
     }
 }

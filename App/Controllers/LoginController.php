@@ -1,60 +1,124 @@
 <?php
+//namespace App\Controllers;
+//
+//use App\Core\Controller;
+//use App\Models\Users;
+//use App\Core\Request;
+//
+//class LoginController extends Controller
+//{
+//    private Users $userModel;
+//
+//    public function __construct()
+//    {
+//        parent::__construct();
+//        $this->userModel = new Users();
+//    }
+//
+//    public function index(Request $request): void
+//    {
+//        if($this->session->has('user_id')){
+//            $this->redirect('/posts');
+//            return;
+//        }
+//        $data = [
+//            'errors' => $this->getErrors(),
+//            'success' => $this->getSuccess(),
+//        ];
+//
+//        echo $this->render('login', $data);
+//        $this->clearSession();
+//    }
+//
+//    public function store(Request $request): void
+//    {
+//        $username = trim($request->postParam('username', ''));
+//        $password = trim($request->postParam('password', ''));
+//        if (empty($username)) {
+//            $this->setError('Имя пользователя обязательно');
+//        }
+//
+//        if (empty($password)) {
+//            $this->setError('Пароль обязателен');
+//        }
+//
+//        if ($this->hasErrors()) {
+//            $this->redirect('/login');
+//            return;
+//        }
+//
+//        $user = $this->userModel->findByName($username);
+//
+//        if ($user && password_verify($password, $user['password'])) {
+//            $this->session->setUser($user['id']);
+//            $this->setSuccess("Добро пожаловать, {$username}!");
+//            $this->redirect('/posts');
+//        } else {
+//            $this->setError('Неправильное имя пользователя или пароль');
+//            $this->redirect('/login');
+//        }
+//    }
+//}
 namespace App\Controllers;
 
-use App\Core\Request;
-use App\Core\View;
+use App\Core\Controller;
 use App\Models\Users;
+use App\Core\Request;
 
-class LoginController
+class LoginController extends Controller
 {
     private Users $userModel;
-    private View $view;
 
     public function __construct()
     {
+        parent::__construct();
         $this->userModel = new Users();
-        $this->view = new View();
     }
 
     public function index(Request $request): void
     {
         $data = [
-            'errors' => $_SESSION['errors'] ?? [],
-            'success' => $_SESSION['success'] ?? '',
+            'errors' => $this->getErrors(),
+            'success' => $this->getSuccess(),
         ];
 
-        echo $this->view->render('login', $data);
-        unset($_SESSION['errors'], $_SESSION['success']);
+        echo $this->render('login', $data);
+        $this->clearSession();
     }
 
     public function store(Request $request): void
     {
-        $username = trim($request->post()->getString('username', ''));
-        $password = trim($request->post()->get('password', ''));
-        $errors = [];
+        $username = trim($request->postParam('username', ''));
+        $password = trim($request->postParam('password', ''));
 
-        if (empty($username) || empty($password)) {
-            $errors[] = 'заполните все поля';
-        }else{
-            $user = $this->userModel->findByName($username);
-            if ($user && password_verify($password, $user['password'])) {
-                $_SESSION['user_id'] = $user['id'];
-                $_SESSION['success'] = "добро пожаловать {$username}";
-                header('Location: /posts');
-                exit();
-            }else{
-                $errors[] = 'неправильное имя или пароль';
-            }
+        if (empty($username)) {
+            $this->setError('Имя пользователя обязательно');
         }
-        $_SESSION['errors'] = $errors;
-        header('Location: /login');
-        exit();
-    }
 
-    public function logout(Request $request): void
+        if (empty($password)) {
+            $this->setError('Пароль обязателен');
+        }
+
+        if ($this->hasErrors()) {
+            $this->redirect('/login');
+            return;
+        }
+
+        $user = $this->userModel->findByName($username);
+
+        if ($user && password_verify($password, $user['password'])) {
+            $this->session->setUser($user['id']);
+            $this->setSuccess("Добро пожаловать, {$username}!");
+            $this->redirect('/posts');
+        } else {
+            $this->setError('Неправильное имя пользователя или пароль');
+            $this->redirect('/login');
+        }
+    }
+        public function logout(Request $request): void
     {
-        session_destroy();
-        header('Location: /login');
-        exit();
+        $this->session->logout();
+        $this->setSuccess('Вы вышли из системы');
+        $this->redirect('/login');
     }
 }
