@@ -60,7 +60,7 @@
                     <div class = 'post-tags'>
                         <strong>Теги:</strong>
                         <?php foreach ($post->getTags() as $tag): ?>
-                            <span class="tag"><?= htmlspecialchars($tag->getTitle())?></span>
+                            <span class="tag"><?= htmlspecialchars($tag->getName())?></span>
                         <?php endforeach; ?>
                     </div>
                     <?php endif; ?>

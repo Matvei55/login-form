@@ -64,7 +64,7 @@ class Tags extends AbstractModel implements Model
     {
         return $this->builder
             ->table($this->table)
-            ->where('title', $name)
+            ->where('name', $name)
             ->fetchOne();
     }
 
@@ -96,12 +96,12 @@ class Tags extends AbstractModel implements Model
     }
 
     $tag = new Tags();
-    $tag->setData(['title' => $name]);
+    $tag->setData(['name' => $name]);
     $tag->save();
     return $tag;
     }
-    public function getTitle(): string
+    public function getName(): string
     {
-        return $this->data['title'] ?? '';
+        return $this->data['name'] ?? '';
     }
 }

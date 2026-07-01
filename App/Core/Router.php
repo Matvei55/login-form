@@ -2,9 +2,14 @@
 namespace App\Core;
 class Router
 {
-    public function dispatch(Request $request): void
+    private Request $request;
+    public function __construct(Request $request)
     {
-        $url = $request->getUri();
+        $this->request = $request;
+    }
+    public function dispatch(): void
+    {
+        $url = $this->request->getUri();
 
         $parts = explode('/', trim($url, '/'));
 
@@ -28,7 +33,7 @@ class Router
             $this->notFound();
             return;
         }
-        $controller->$action($request, ...$params);
+        $controller->$action($this->request, ...$params);
     }
     private function notFound(): void
     {
