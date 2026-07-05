@@ -3,7 +3,6 @@ namespace App\Container;
 
 use App\Container\Exceptions\ContainerException;
 use App\Container\Exceptions\NotFoundException;
-use Reflection;
 
 class Container implements ContainerInterface
 {
@@ -51,6 +50,20 @@ class Container implements ContainerInterface
         }
 
         throw new NotFoundException("зависимость не найдена : $id");
+    }
+
+    private function resolve($concrete)
+    {
+        if($concrete instanceof \Closure){
+            return $concrete($this);
+        }
+        if(is_object($concrete)){
+            return $concrete;
+        }
+        if(is_string($concrete)){
+            return $this->resolveClass($concrete);
+        }
+        throw new ContainerException("не удалось разрешить зависимость");
     }
 
     private function resolveClass(string $className)
@@ -106,9 +119,11 @@ class Container implements ContainerInterface
             return;
         }
 
-        $files = glob($directory . '.php');
-        $fullClassName = $namespace ? $namespace . '\\' . $className : $className;
-
+        $files = glob($directory . '/*.php');
+        foreach($files as $file) {
+            $className= basename($file, '.php');
+            $fullClassName = $namespace ? $namespace . '\\' . $className : $className;
+        }
         if(class_exists($fullClassName) && !$this->has($fullClassName)) {
             $reflection = new \ReflectionClass($fullClassName);
             if($reflection->isInstantiable()) {

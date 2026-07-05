@@ -1,78 +1,19 @@
 <?php
-//namespace App\Controllers;
-//
-//use App\Core\Controller;
-//use App\Models\Users;
-//use App\Core\Request;
-//
-//class LoginController extends Controller
-//{
-//    private Users $userModel;
-//
-//    public function __construct()
-//    {
-//        parent::__construct();
-//        $this->userModel = new Users();
-//    }
-//
-//    public function index(Request $request): void
-//    {
-//        if($this->session->has('user_id')){
-//            $this->redirect('/posts');
-//            return;
-//        }
-//        $data = [
-//            'errors' => $this->getErrors(),
-//            'success' => $this->getSuccess(),
-//        ];
-//
-//        echo $this->render('login', $data);
-//        $this->clearSession();
-//    }
-//
-//    public function store(Request $request): void
-//    {
-//        $username = trim($request->postParam('username', ''));
-//        $password = trim($request->postParam('password', ''));
-//        if (empty($username)) {
-//            $this->setError('Имя пользователя обязательно');
-//        }
-//
-//        if (empty($password)) {
-//            $this->setError('Пароль обязателен');
-//        }
-//
-//        if ($this->hasErrors()) {
-//            $this->redirect('/login');
-//            return;
-//        }
-//
-//        $user = $this->userModel->findByName($username);
-//
-//        if ($user && password_verify($password, $user['password'])) {
-//            $this->session->setUser($user['id']);
-//            $this->setSuccess("Добро пожаловать, {$username}!");
-//            $this->redirect('/posts');
-//        } else {
-//            $this->setError('Неправильное имя пользователя или пароль');
-//            $this->redirect('/login');
-//        }
-//    }
-//}
 namespace App\Controllers;
 
 use App\Core\Controller;
 use App\Models\Users;
 use App\Core\Request;
+use App\Container\ContainerInterface;
 
 class LoginController extends Controller
 {
     private Users $userModel;
 
-    public function __construct()
+    public function __construct(ContainerInterface $container)
     {
-        parent::__construct();
-        $this->userModel = new Users();
+        parent::__construct($container);
+        $this->userModel = $container->get(Users::class);
     }
 
     public function index(Request $request): void

@@ -1,19 +1,22 @@
 <?php
 
 namespace App\Core;
-use App\Models\Users;
+
+use App\Container\ContainerInterface;
 
 abstract class Controller
 {
-    protected View  $view;
+    protected ContainerInterface $container;
     protected Request $request;
+    protected View $view;
     protected Session $session;
 
-    public function __construct()
+    public function __construct(ContainerInterface $container)
     {
-        $this->request = new Request();
-         $this->view = new View();
-        $this->session = new Session();
+        $this->container = $container;
+        $this->request = $container->get(Request::class);
+        $this->view = $container->get(View::class);
+        $this->session = $container->get(Session::class);
     }
 
     abstract public function index(Request $request):void;
@@ -41,7 +44,7 @@ abstract class Controller
     {
         if($this->session->has('user_id')){
             $userId = $this->session->getUserId();
-            $userModel = new Users();
+            $userModel = new \App\Models\Users();
             return $userModel->load($userId)->getData();
         }
         return null;

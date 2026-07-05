@@ -28,7 +28,10 @@ class Router
             $this->notFound();
             return;
         }
-        $controller = new $controllerClass();
+        $controller = Application::getInstance()
+            ->getContainer()
+            ->get($controllerClass);
+
         if(!method_exists($controller, $action)) {
             $this->notFound();
             return;
