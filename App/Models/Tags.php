@@ -1,9 +1,6 @@
 <?php
 
 namespace App\Models;
-use App\QueryBuilder;
-use PDO;
-use App\Models\AbstractModel;
 class Tags extends AbstractModel implements Model
 {
     private string $table = 'tags';

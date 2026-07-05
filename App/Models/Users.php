@@ -1,8 +1,5 @@
 <?php
 namespace App\Models;
-use App\Models\Model;
-use App\QueryBuilder;
-use App\Models\AbstractModel;
 class Users extends AbstractModel implements Model
 {
     private string $table = 'users';//здесь имя таблицы

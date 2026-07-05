@@ -2,7 +2,7 @@
 
 namespace App\Models;
 
-use App\QueryBuilder;
+use App\Core\QueryBuilder;
 
 abstract class AbstractModel
 {
