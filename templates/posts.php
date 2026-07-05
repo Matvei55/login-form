@@ -1,5 +1,6 @@
 <div class="posts-container">
     <h1>посты</h1>
+    <a href="/logout">EXIT</a>
 
     <?php if (!empty($success)): ?>
         <div class="success"> <?= htmlspecialchars($success) ?></div>
