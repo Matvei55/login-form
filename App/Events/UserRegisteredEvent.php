@@ -1,8 +1,8 @@
 <?php
-
+namespace App\Events;
 use App\Models\Users;
 
-class UserRegisteredEvent extends Events
+class UserRegisteredEvent extends Event
 {
     public Users $user;
 

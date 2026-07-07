@@ -128,4 +128,8 @@ class Users extends AbstractModel implements Model
             ->fetchOne();
         return $result ;
     }
+    public function getName(): string
+    {
+        return $this->data['name'] ?? '';
+    }
 }

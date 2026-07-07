@@ -1,7 +1,9 @@
 <?php
 namespace App\Controllers;
 
+use App\Core\Application;
 use App\Core\Controller;
+use App\Events\PostCreatedEvent;
 use App\Models\Posts;
 use App\Models\Tags;
 use App\Models\Users;
@@ -84,10 +86,10 @@ class PostsController extends Controller
                     $this->postModel->attachTag($tag);
                 }
             }
+            $event = new PostCreatedEvent($this->postModel, $user);
+            Application::getInstance()->getDispatcher()->dispatch($event);
 
             $this->setSuccess('Пост успешно создан!');
-        } else {
-            $this->setError('Не удалось создать пост');
         }
 
         $this->redirect('/posts');

@@ -1,7 +1,9 @@
 <?php
 namespace App\Controllers;
 
+use App\Core\Application;
 use App\Core\Controller;
+use App\Events\UserRegisteredEvent;
 use App\Models\Users;
 use App\Core\Request;
 use App\Container\ContainerInterface;
@@ -59,6 +61,9 @@ class RegisterController extends Controller
         ])->save();
 
         if ($userId) {
+            $event = new UserRegisteredEvent($this->userModel);
+            Application::getInstance()->getDispatcher()->dispatch($event);
+
             $this->session->setUser($userId);
             $this->setSuccess("Добро пожаловать, {$username}!");
             $this->redirect('/posts');

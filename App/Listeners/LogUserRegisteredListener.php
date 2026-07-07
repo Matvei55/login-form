@@ -14,6 +14,6 @@ class LogUserRegisteredListener extends Listener
         $username = $userData['name'] ?? 'неизвестно';
         $userId = $event->user->getId() ?? 'новый';
 
-        error_log("[СОБЫТИЕ] Зарегистрирован новый пользователь: '$username'")
+        error_log("[СОБЫТИЕ] Зарегистрирован новый пользователь: '$username'");
     }
 }
