@@ -2,18 +2,23 @@
 namespace App\Controllers;
 
 use App\Core\Controller;
+use App\Core\Session;
+use App\Core\View;
 use App\Models\Users;
 use App\Core\Request;
 use App\Container\ContainerInterface;
 
 class LoginController extends Controller
 {
-    private Users $userModel;
 
-    public function __construct(ContainerInterface $container)
-    {
-        parent::__construct($container);
-        $this->userModel = $container->get(Users::class);
+
+    public function __construct(
+        Request $request,
+        View $view,
+        Session $session,
+        private Users $userModel
+    ){
+        parent::__construct($request, $view, $session);
     }
 
     public function index(Request $request): void

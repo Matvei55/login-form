@@ -3,15 +3,13 @@ namespace App\Core;
 
 class Request
 {
-    private Get $get;
-    private Post $post;
     private string $method;
     private string $uri;
 
-    public function __construct()
+    public function __construct(
+        private Get $get,
+        private Post $post)
     {
-        $this->get = new Get();
-        $this->post = new Post();
         $this->method = $_SERVER['REQUEST_METHOD'] ?? 'GET';
         $this->uri = $_SERVER['REQUEST_URI'] ?? '/';
     }

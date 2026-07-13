@@ -4,12 +4,9 @@ use App\Middleware\GuestMiddleware;
 use App\Middleware\MiddlewareDispatcher;
 class Router
 {
-    private Request $request;
 
-    public function __construct(Request $request)
-    {
-        $this->request = $request;
-    }
+    public function __construct(private Request $request)
+    {}
 
     public function dispatch(): void
     {

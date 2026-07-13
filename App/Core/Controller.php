@@ -6,18 +6,11 @@ use App\Container\ContainerInterface;
 
 abstract class Controller
 {
-    protected ContainerInterface $container;
-    protected Request $request;
-    protected View $view;
-    protected Session $session;
-
-    public function __construct(ContainerInterface $container)
-    {
-        $this->container = $container;
-        $this->request = $container->get(Request::class);
-        $this->view = $container->get(View::class);
-        $this->session = $container->get(Session::class);
-    }
+    public function __construct(
+        protected Request $request,
+        protected View $view,
+        protected Session $session)
+    {}
 
     abstract public function index(Request $request):void;
     abstract public function store(Request $request):void;

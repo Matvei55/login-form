@@ -5,12 +5,8 @@ use App\Core\Request;
 
 class MiddlewareDispatcher
 {
-    private array $middlewares = [];
-
-    public function __construct(array $middlewares = [])
-    {
-        $this->middlewares = $middlewares;
-    }
+    public function __construct(private array $middlewares = [])
+    {}
 
     public function add(string $middleware): self
     {

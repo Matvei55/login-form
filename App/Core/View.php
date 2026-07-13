@@ -3,12 +3,10 @@ namespace App\Core;
 
 class View{
 
-    private string $templatePath;
 
-    public function __construct($templatePath = '/var/www/html/templates')
-    {
-        $this->templatePath = $templatePath;
-    }
+
+    public function __construct(private string $templatePath = '/var/www/html/templates')
+    {}
     public function render(string $templateName, array $data = [], string $layout='layouts/layout') : string
     {
         $content= $this->renderTemplate($templateName,$data);

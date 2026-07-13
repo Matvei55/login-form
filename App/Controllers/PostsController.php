@@ -3,6 +3,8 @@ namespace App\Controllers;
 
 use App\Core\Application;
 use App\Core\Controller;
+use App\Core\Session;
+use App\Core\View;
 use App\Events\PostCreatedEvent;
 use App\Models\Posts;
 use App\Models\Tags;
@@ -12,16 +14,9 @@ use App\Container\ContainerInterface;
 
 class PostsController extends Controller
 {
-    private Posts $postModel;
-    private Users $userModel;
-    private Tags $tagModel;
-
-    public function __construct(ContainerInterface $container)
+    public function __construct(Request $request, View $view,Session $session ,private Users $userModel, private Posts $postModel, private Tags $tagModel)
     {
-        parent::__construct($container);
-        $this->postModel = $container->get(Posts::class);
-        $this->userModel = $container->get(Users::class);
-        $this->tagModel = $container->get(Tags::class);
+        parent::__construct($request, $view, $session);
     }
 
     public function index(Request $request): void

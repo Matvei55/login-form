@@ -1,13 +1,15 @@
 <?php
 namespace App\Models;
 use App\Models\Tags;
+
+
 class Posts extends AbstractModel implements Model
 {
     private string $table = 'posts';
     private ?Users $user = null;
     private array $tags = [];
-
     private Tags $tag;
+
 
     public function __construct()
     {
