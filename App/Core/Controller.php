@@ -12,9 +12,25 @@ abstract class Controller
         protected Session $session)
     {}
 
-    abstract public function index(Request $request):void;
-    abstract public function store(Request $request):void;
+    // abstract public function index(Request $request):void;
+    // abstract public function store(Request $request):void;
 
+    protected function getMiddlewareConfig(): array
+    {
+        return [];
+    }
+
+    public function getMiddlewareForAction(string $action): array
+    {
+        $config = $this->getMiddlewareConfig();
+        return $config[$action] ?? [];
+    }
+
+    public function getAllMiddleware(): array
+    {
+        return $this->getMiddlewareConfig();
+    }
+    
     protected function render(string $view, array $data = []): string
     {
         return $this->view->render($view, $data);

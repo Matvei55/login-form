@@ -6,6 +6,22 @@ use App\Core\Request;
 
 class LogoutController extends Controller
 {
+    public function __construct(
+        Request $request,
+        View $view,
+        Session $session
+    ) {
+        parent::__construct($request, $view, $session);
+    }
+
+    protected function getMiddlewareConfig(): array
+    {
+        return [
+            'index' => [],
+            'store' => [],
+        ];
+    }
+    
     public function index(Request $request): void
     {
         // Очищаем сессию

@@ -46,29 +46,36 @@ class Router
             return;
         }
 
-        $middlewares = $this->getMiddlewareForRoute($controllerName, $action);
+        $middlewares = $this->getMiddlewareForRoute($controller, $action);
 
-        $dispatcher = new MiddlewareDispatcher($middlewares);
-        $dispatcher->handle($this->request, function ($request) use ($controller, $action, $params) {
+        $dispatcher = $container->make(MiddlewareDispatcher::class, ['middlewares' => $middlewares]);
+        $dispatcher->handle($this->request, function ($request) use ($controller,$action,$params) {
             return $controller->$action($request, ...$params);
         });
     }
 
-    private function getMiddlewareForRoute(string $controllerName, string $action): array
+    private function getMiddlewareForRoute(Controller $controller, string $action):array
     {
-        if ($controllerName === 'LogoutController') {
-            return [];
-        }
-        $guestRoutes = [
-            'LoginController' => ['index', 'store'],
-            'RegisterController' => ['index', 'store'],
-        ];
+        $controllerMiddlewares = $controller->getMiddlewareForAction($action);
 
-        if (isset($guestRoutes[$controllerName]) && in_array($action, $guestRoutes[$controllerName])) {
-            return [\App\Middleware\GuestMiddleware::class];
-        }
+        if(empty($controllerMiddlewares)){
+            $controllerName = get_class($controller);
+            $controllerName= basename(str_replace('\\', '/', $controllerName));
 
-        return [\App\Middleware\AuthMiddleware::class];
+            if($controllerName === 'LogoutController'){
+                return [];
+            }
+
+            $questRoutes = [
+                'LoginController' => ['index', 'store'],
+                'RegisterController' => ['index', 'store'],
+            ];
+            if(isset($questRoutes[controllerName]) && in_array($action,$questRoutes[$controllerName])){
+                return [GuestMiddleware::class];
+            }
+            return [AuthMiddleware::class];
+        }
+        return $controllerMiddlewares;
     }
 
     private function notFound(): void

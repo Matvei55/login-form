@@ -13,15 +13,13 @@ use App\Middleware\MiddlewareInterface;
 class Application
 {
     private static ?Application $instance = null;
-    private ContainerInterface $container;
-    private Router $router;
-    private Request $request;
-    private EventDispatcher $dispatcher;
 
-    private function __construct() //закрытый конструктор,читает енв и создает контейнер и регестрирует классы
+    private function __construct(    private ContainerInterface $container;
+        private Router $router;
+        private Request $request;
+        private EventDispatcher $dispatcher;) //закрытый конструктор,читает енв и создает контейнер и регестрирует классы
     {
         Config::load(__DIR__ . '/../../.env');
-        $this->container = new Container();
         $this->container->singleton(ContainerInterface::class,function (){
             return $this->container;
         }

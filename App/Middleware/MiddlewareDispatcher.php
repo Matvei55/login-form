@@ -5,8 +5,12 @@ use App\Core\Request;
 
 class MiddlewareDispatcher
 {
-    public function __construct(private array $middlewares = [])
-    {}
+    private array $middlewares = []
+
+    public function __construct(private ContainerInterface $container)
+    {
+        $this->middlewares = $middlewares;    
+    }
 
     public function add(string $middleware): self
     {
@@ -19,7 +23,7 @@ class MiddlewareDispatcher
             return $controller($request);
         };
         foreach (array_reverse($this->middlewares) as $middlewareClass) {
-            $middleware = new $middlewareClass();
+            $middleware = $this->container->get($middlewareClass);
 
             $next = function ($request) use ($middleware, $next) {
                 return $middleware->handle($request, $next);

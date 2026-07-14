@@ -19,6 +19,14 @@ class PostsController extends Controller
         parent::__construct($request, $view, $session);
     }
 
+    public function getMiddlewareConfig():array
+    {
+        return [
+            'index' => [AuthMiddleware::class],
+            'store' => [AuthMiddleware::class],
+        ];
+    }
+    
     public function index(Request $request): void
     {
         $this->requireAuth();

@@ -2,15 +2,12 @@
 namespace App\Controllers;
 
 use App\Core\Controller;
-use App\Core\Session;
-use App\Core\View;
 use App\Models\Users;
 use App\Core\Request;
-use App\Container\ContainerInterface;
 
 class LoginController extends Controller
 {
-
+    private Users $userModel;
 
     public function __construct(
         Request $request,
@@ -18,7 +15,15 @@ class LoginController extends Controller
         Session $session,
         private Users $userModel
     ){
-        parent::__construct($request, $view, $session);
+        parent::__construct($request,$view,$session);
+    }
+
+    protected function getMiddlewareConfig(): array
+    {
+        return [
+            'index' => [GuestMiddleware::class],
+            'store' => [GuestMiddleware::class],
+        ];
     }
 
     public function index(Request $request): void
