@@ -131,4 +131,88 @@ class Container implements ContainerInterface
             }
         }
     }
+
+    public function make(string $className, array $parameters = [])
+    {
+    if ($this->has($className)) {
+        $concrete = $this->bindings[$className];
+        return $this->resolveWithParameters($concrete, $parameters);
+    }
+    
+    if (class_exists($className)) {
+        return $this->resolveClassWithParameters($className, $parameters);
+    }
+    
+    throw new NotFoundException("класс не найден: $className");
+    }
+
+    private function resolveWithParameters($concrete, array $parameters = [])
+    {
+        if ($concrete instanceof \Closure) {
+            return $concrete($this);
+        }
+        if (is_object($concrete)) {
+            return $concrete;
+        }
+        if (is_string($concrete)) {
+            return $this->resolveClassWithParameters($concrete, $parameters);
+        }
+        throw new ContainerException("Не удалось разрешить зависимость");
+    }
+
+    private function resolveClassWithParameters(string $className, array $parameters = [])
+    {
+        $reflection = new \ReflectionClass($className);
+
+        if (!$reflection->isInstantiable()) {
+            throw new ContainerException("Класс не может быть создан: $className");
+        }
+
+        $constructor = $reflection->getConstructor();
+
+        if ($constructor === null) {
+            return $reflection->newInstance();
+        }
+
+        $params = $constructor->getParameters();
+        $dependencies = [];
+
+        foreach ($params as $param) {
+            $paramName = $param->getName();
+
+            if (array_key_exists($paramName, $parameters)) {
+                $dependencies[] = $parameters[$paramName];
+                continue;
+            }
+
+            $type = $param->getType();
+
+            if ($type === null) {
+                if ($param->isDefaultValueAvailable()) {
+                    $dependencies[] = $param->getDefaultValue();
+                    continue;
+                }
+                throw new ContainerException("Не удалось разрешить параметр: $paramName");
+            }
+
+            $typeName = $type->getName();
+
+            if ($type->isBuiltin()) {
+                if ($param->isDefaultValueAvailable()) {
+                    $dependencies[] = $param->getDefaultValue();
+                    continue;
+                }
+                throw new ContainerException("Не удалось разрешить параметр: $paramName");
+            }
+            if ($this->has($typeName) || class_exists($typeName)) {
+                $dependencies[] = $this->get($typeName);
+            } elseif ($param->isDefaultValueAvailable()) {
+                $dependencies[] = $param->getDefaultValue();
+            } else {
+                throw new ContainerException("Не удалось разрешить зависимость: $typeName");
+            }
+        }
+
+        return $reflection->newInstanceArgs($dependencies);
+    }
 }

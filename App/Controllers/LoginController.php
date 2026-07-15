@@ -4,6 +4,8 @@ namespace App\Controllers;
 use App\Core\Controller;
 use App\Models\Users;
 use App\Core\Request;
+use App\Core\View;
+use App\Core\Session;
 
 class LoginController extends Controller
 {
@@ -13,7 +15,7 @@ class LoginController extends Controller
         Request $request,
         View $view,
         Session $session,
-        private Users $userModel
+        Users $userModel
     ){
         parent::__construct($request,$view,$session);
     }

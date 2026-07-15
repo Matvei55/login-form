@@ -4,7 +4,7 @@ namespace App\Middleware;
 use App\Core\Request;
 use App\Core\Session;
 
-class GuestMiddleware extends Middleware
+class GuestMiddleware extends Middleware implements MiddlewareInterface
 {
     public function handle(Request $request, callable $next)
     {

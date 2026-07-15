@@ -1,10 +1,13 @@
 <?php
 namespace App\Core;
+
 use App\Middleware\GuestMiddleware;
+use App\Middleware\AuthMiddleware;
+use App\Middleware\LoggerMiddleware;
 use App\Middleware\MiddlewareDispatcher;
+
 class Router
 {
-
     public function __construct(private Request $request)
     {}
 
@@ -16,11 +19,11 @@ class Router
         $url = strtok($url, '?');
         $parts = explode('/', trim($url, '/'));
 
-        if(isset($parts[0]) && $parts[0] === 'logout') {
+        if (isset($parts[0]) && $parts[0] === 'logout') {
             $controllerName = 'LogoutController';
             $action = 'index';
             $params = [];
-        }elseif (empty($parts[0]) || $parts[0] === '') {
+        } elseif (empty($parts[0]) || $parts[0] === '') {
             $controllerName = 'LoginController';
             $action = 'index';
             $params = [];
@@ -37,9 +40,8 @@ class Router
             return;
         }
 
-        $controller = Application::getInstance()
-            ->getContainer()
-            ->get($controllerClass);
+        $container = Application::getInstance()->getContainer();
+        $controller = $container->get($controllerClass);
 
         if (!method_exists($controller, $action)) {
             $this->notFound();
@@ -48,34 +50,41 @@ class Router
 
         $middlewares = $this->getMiddlewareForRoute($controller, $action);
 
-        $dispatcher = $container->make(MiddlewareDispatcher::class, ['middlewares' => $middlewares]);
-        $dispatcher->handle($this->request, function ($request) use ($controller,$action,$params) {
+        $dispatcher = new MiddlewareDispatcher($container, $middlewares);
+        $dispatcher->handle($this->request, function ($request) use ($controller, $action, $params) {
             return $controller->$action($request, ...$params);
         });
     }
 
-    private function getMiddlewareForRoute(Controller $controller, string $action):array
+    private function getMiddlewareForRoute(Controller $controller, string $action): array
     {
+        $middlewares = [LoggerMiddleware::class];
+
         $controllerMiddlewares = $controller->getMiddlewareForAction($action);
 
-        if(empty($controllerMiddlewares)){
+        if (empty($controllerMiddlewares)) {
             $controllerName = get_class($controller);
-            $controllerName= basename(str_replace('\\', '/', $controllerName));
+            $controllerName = basename(str_replace('\\', '/', $controllerName));
 
-            if($controllerName === 'LogoutController'){
-                return [];
+            if ($controllerName === 'LogoutController') {
+                return $middlewares;
             }
 
-            $questRoutes = [
+            $guestRoutes = [
                 'LoginController' => ['index', 'store'],
                 'RegisterController' => ['index', 'store'],
             ];
-            if(isset($questRoutes[controllerName]) && in_array($action,$questRoutes[$controllerName])){
-                return [GuestMiddleware::class];
+
+            if (isset($guestRoutes[$controllerName]) && in_array($action, $guestRoutes[$controllerName])) {
+                $middlewares[] = GuestMiddleware::class;
+                return $middlewares;
             }
-            return [AuthMiddleware::class];
+
+            $middlewares[] = AuthMiddleware::class;
+            return $middlewares;
         }
-        return $controllerMiddlewares;
+
+        return array_merge($middlewares, $controllerMiddlewares);
     }
 
     private function notFound(): void

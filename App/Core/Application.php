@@ -13,17 +13,16 @@ use App\Middleware\MiddlewareInterface;
 class Application
 {
     private static ?Application $instance = null;
-
-    private function __construct(    private ContainerInterface $container;
-        private Router $router;
-        private Request $request;
-        private EventDispatcher $dispatcher;) //закрытый конструктор,читает енв и создает контейнер и регестрирует классы
-    {
+    private function __construct(
+        private ContainerInterface $container,
+        private Router $router,
+        private Request $request,
+        private EventDispatcher $dispatcher
+    ) {
         Config::load(__DIR__ . '/../../.env');
         $this->container->singleton(ContainerInterface::class,function (){
             return $this->container;
-        }
-        );
+        });
         $this->autoRegister();
 
         $this->request = $this->container->get(Request::class);
@@ -48,6 +47,7 @@ class Application
             __DIR__ . '/../Middleware' => 'App\\Middleware',
             __DIR__ . '/../Events' => 'App\\Events',
             __DIR__ . '/../Listeners' => 'App\\Listeners',
+            __DIR__ . '/../Core' => 'App\\Core',
         ];
 
         foreach ($directories as $path => $namespace) {
@@ -65,6 +65,9 @@ class Application
             View::class,
             Database::class,
             Router::class,
+            \App\Middleware\GuestMiddleware::class,
+            \App\Middleware\AuthMiddleware::class,
+            \App\Middleware\LoggerMiddleware::class,
         ];
 
         foreach ($singletons as $class) { //бд использует свою логику создания через замыкание
@@ -120,7 +123,7 @@ class Application
             if(class_exists($fullClassName)) {
                 $reflection = new \ReflectionClass($fullClassName);
 
-                if($reflection->implementsInterface(MiddlewareInterface::class)) {
+                if($reflection->implementsInterface(\App\Middleware\MiddlewareInterface::class)) {
                     $this->container->bind($fullClassName);
                 }
             }
@@ -133,12 +136,25 @@ class Application
         $this->dispatcher->addListener(UserRegisteredEvent::class, LogUserRegisteredListener::class);
     }
 
-    public static function getInstance(): self //создаю синглетон(1)
+    public static function getInstance(): self
     {
-        if(self::$instance === null) {
-            self::$instance = new self();
-        }
-        return self::$instance;
+    if (self::$instance === null) {
+        // ✅ СОЗДАЁМ Get И Post
+        $container = new Container();
+        $get = new Get();
+        $post = new Post();
+
+        // ✅ СОЗДАЁМ Request С АРГУМЕНТАМИ
+        $request = new Request($get, $post);
+
+        self::$instance = new self(
+            $container,
+            new Router($request),
+            $request,
+            new EventDispatcher()
+        );
+    }
+    return self::$instance;
     }
     public function run(): void //запуск приложения
     {

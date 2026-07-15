@@ -2,15 +2,16 @@
 namespace App\Middleware;
 
 use App\Core\Request;
+use App\Container\ContainerInterface;
+use App\Middleware\GuestMiddleware;
+use App\Middleware\AuthMiddleware;
 
 class MiddlewareDispatcher
 {
-    private array $middlewares = []
+    
 
-    public function __construct(private ContainerInterface $container)
-    {
-        $this->middlewares = $middlewares;    
-    }
+    public function __construct(private ContainerInterface $container,private array $middlewares = [])
+    {}
 
     public function add(string $middleware): self
     {

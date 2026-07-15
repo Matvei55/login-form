@@ -3,6 +3,8 @@ namespace App\Controllers;
 
 use App\Core\Controller;
 use App\Core\Request;
+use App\Core\View;
+use App\Core\Session;
 
 class LogoutController extends Controller
 {

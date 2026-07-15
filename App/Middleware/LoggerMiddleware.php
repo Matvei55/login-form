@@ -5,7 +5,7 @@ use App\Core\Request;
 
 class LoggerMiddleware extends Middleware 
 {
-    private string $logfile = '/var/www/html/logv.json';
+    private string $logFile = '/var/www/html/logs.json';
 
     public function handle(Request $request, callable $next)
     {
@@ -20,10 +20,23 @@ class LoggerMiddleware extends Middleware
             'timestamp' => date('Y-m-d H:i:s'),
             'method'    => $request->getMethod(),
             'uri'       => $request->getUri(),
-            'session_id'=> session_id ?? 'none',
+            'session_id'=> session_id() ?? 'none',
         ];
         $this->writeLog($log);
     }
-    
 
+    private function writeLog(array $data): void
+    {
+        $logs = [];
+        if(file_exists($this->logFile)){
+            $content = file_get_contents($this->logFile);
+            $logs = json_decode($content, true) ?? [];
+        }
+        $logs[]=$data;
+
+        file_put_contents(
+            $this->logFile,
+            json_encode($logs, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE)
+        );
+    }
 }

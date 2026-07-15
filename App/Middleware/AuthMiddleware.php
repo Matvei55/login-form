@@ -5,7 +5,7 @@ use App\Core\Request;
 use App\Core\Session;
 use Closure;
 
-class AuthMiddleware extends Middleware
+class AuthMiddleware extends Middleware implements MiddlewareInterface
 {
     public function handle(Request $request, callable $next)
     {
