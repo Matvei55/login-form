@@ -8,7 +8,7 @@ class Config
     public static function load(string $path): void
     {
         if (!file_exists($path)) {
-            throw new \Exception("Файл .env не найден: $path");
+            throw new \Exception("Файл .env не найден:" . realpath(dirname($path)));
         }
 
         $dotenv = \Dotenv\Dotenv::createImmutable(dirname($path));

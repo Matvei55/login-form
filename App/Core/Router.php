@@ -49,43 +49,44 @@ class Router
         }
 
         $middlewares = $this->getMiddlewareForRoute($controller, $action);
-
         $dispatcher = new MiddlewareDispatcher($container, $middlewares);
         $dispatcher->handle($this->request, function ($request) use ($controller, $action, $params) {
             return $controller->$action($request, ...$params);
         });
     }
+private function getMiddlewareForRoute(Controller $controller, string $action): array
+{
+        error_log('🔍 GuestMiddleware::class = ' . GuestMiddleware::class);
+    error_log('🔍 AuthMiddleware::class = ' . AuthMiddleware::class);
+    error_log('🔍 LoggerMiddleware::class = ' . LoggerMiddleware::class);
+    $middlewares = [LoggerMiddleware::class];  // ← полный путь
 
-    private function getMiddlewareForRoute(Controller $controller, string $action): array
-    {
-        $middlewares = [LoggerMiddleware::class];
+    $controllerMiddlewares = $controller->getMiddlewareForAction($action);
 
-        $controllerMiddlewares = $controller->getMiddlewareForAction($action);
+    if (empty($controllerMiddlewares)) {
+        $controllerName = get_class($controller);
+        $controllerName = basename(str_replace('\\', '/', $controllerName));
 
-        if (empty($controllerMiddlewares)) {
-            $controllerName = get_class($controller);
-            $controllerName = basename(str_replace('\\', '/', $controllerName));
-
-            if ($controllerName === 'LogoutController') {
-                return $middlewares;
-            }
-
-            $guestRoutes = [
-                'LoginController' => ['index', 'store'],
-                'RegisterController' => ['index', 'store'],
-            ];
-
-            if (isset($guestRoutes[$controllerName]) && in_array($action, $guestRoutes[$controllerName])) {
-                $middlewares[] = GuestMiddleware::class;
-                return $middlewares;
-            }
-
-            $middlewares[] = AuthMiddleware::class;
+        if ($controllerName === 'LogoutController') {
             return $middlewares;
         }
 
-        return array_merge($middlewares, $controllerMiddlewares);
+        $guestRoutes = [
+            'LoginController' => ['index', 'store'],
+            'RegisterController' => ['index', 'store'],
+        ];
+
+        if (isset($guestRoutes[$controllerName]) && in_array($action, $guestRoutes[$controllerName])) {
+            $middlewares[] = GuestMiddleware::class;
+            return $middlewares;
+        }
+
+        $middlewares[] = AuthMiddleware::class;
+        return $middlewares;
     }
+
+    return array_merge($middlewares, $controllerMiddlewares);
+}
 
     private function notFound(): void
     {

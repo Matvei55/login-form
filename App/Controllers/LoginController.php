@@ -6,16 +6,15 @@ use App\Models\Users;
 use App\Core\Request;
 use App\Core\View;
 use App\Core\Session;
-
+use App\Middleware\GuestMiddleware;
 class LoginController extends Controller
 {
-    private Users $userModel;
 
     public function __construct(
         Request $request,
         View $view,
         Session $session,
-        Users $userModel
+        private Users $userModel
     ){
         parent::__construct($request,$view,$session);
     }

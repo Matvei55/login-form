@@ -11,6 +11,7 @@ use App\Models\Tags;
 use App\Models\Users;
 use App\Core\Request;
 use App\Container\ContainerInterface;
+use App\Middleware\AuthMiddleware;
 
 class PostsController extends Controller
 {

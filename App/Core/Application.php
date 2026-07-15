@@ -9,6 +9,9 @@ use App\Listeners\LogPostCreatedListener;
 use App\Listeners\LogUserRegisteredListener;
 use App\Middleware\Middleware;
 use App\Middleware\MiddlewareInterface;
+use App\Middleware\AuthMiddleware;
+use App\Middleware\GuestMiddleware;
+use App\Middleware\LoggerMiddleware;
 
 class Application
 {
@@ -24,11 +27,6 @@ class Application
             return $this->container;
         });
         $this->autoRegister();
-
-        $this->request = $this->container->get(Request::class);
-        $this->router = $this->container->get(Router::class);
-        $this->dispatcher = new EventDispatcher();
-
         $this->registerEvents();
     }
 
@@ -65,9 +63,9 @@ class Application
             View::class,
             Database::class,
             Router::class,
-            \App\Middleware\GuestMiddleware::class,
-            \App\Middleware\AuthMiddleware::class,
-            \App\Middleware\LoggerMiddleware::class,
+            GuestMiddleware::class,
+            AuthMiddleware::class,
+            LoggerMiddleware::class,
         ];
 
         foreach ($singletons as $class) { //бд использует свою логику создания через замыкание
@@ -123,8 +121,9 @@ class Application
             if(class_exists($fullClassName)) {
                 $reflection = new \ReflectionClass($fullClassName);
 
-                if($reflection->implementsInterface(\App\Middleware\MiddlewareInterface::class)) {
+                if($reflection->implementsInterface(MiddlewareInterface::class)) {
                     $this->container->bind($fullClassName);
+                    error_log("✅ Зарегистрирован middleware: " . $fullClassName);
                 }
             }
         }
@@ -139,12 +138,10 @@ class Application
     public static function getInstance(): self
     {
     if (self::$instance === null) {
-        // ✅ СОЗДАЁМ Get И Post
         $container = new Container();
         $get = new Get();
         $post = new Post();
 
-        // ✅ СОЗДАЁМ Request С АРГУМЕНТАМИ
         $request = new Request($get, $post);
 
         self::$instance = new self(
