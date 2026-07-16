@@ -4,27 +4,36 @@ class Users extends AbstractModel implements Model
 {
     private string $table = 'users';//здесь имя таблицы
 
-    public function save()
-    {
-        if($this->id !== null){
-            $result = $this->builder
-                ->table($this->table)
-                ->where('id', $this->id)
-                ->update($this->data);
-            return $result;
-        }
-        $newId = $this->builder
-            ->table($this->table)
-            ->insert($this->data);
+//    public function save()
+//    {
+//        if($this->id !== null){
+//            $result = $this->builder
+//                ->table($this->table)
+//                ->where('id', $this->id)
+//                ->update($this->data);
+//            return $result;
+//        }
+//        $newId = $this->builder
+//            ->table($this->table)
+//            ->insert($this->data);
+//
+//        if($newId){
+//            $this->id = $newId;
+//            $this->data['id'] = $newId;
+//            return $newId;
+//        }
+//        return false;
+//    }
 
-        if($newId){
-            $this->id = $newId;
-            $this->data['id'] = $newId;
-            return $newId;
-        }
-        return false;
+    protected function saveAfter():void
+    {
+        error_log("пользователь {$this->id} сохранен");
     }
 
+    protected function getTable(): string
+    {
+     return $this->table;
+    }
     public function load(?int $id = null): self
     {
         if($id !== null){

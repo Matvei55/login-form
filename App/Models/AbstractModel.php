@@ -54,4 +54,29 @@ abstract class AbstractModel
     {
 
     }
+
+    public function save()
+    {
+        $this->saveBefore();
+        if($this->id !== null) {
+            $result = $this->builder
+                ->table($this->getTable())
+                ->where('id', $this->id)
+                ->update($this->data);
+        }else{
+            $newId = $this->builder
+                ->table($this->getTable())
+                ->insert($this->data);
+            if($newId){
+                $this->id = $newId;
+                $this->data['id'] = $newId;
+                $result = $newId;
+            }else{
+                $result = false;
+            }
+        }
+        return $result;
+    }
+
+    abstract protected function getTable(): string;
 }

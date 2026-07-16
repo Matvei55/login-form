@@ -1,30 +1,32 @@
 <?php
 
 namespace App\Models;
+use App\Core\Application;
+
 class Tags extends AbstractModel implements Model
 {
     private string $table = 'tags';
 
-    public function save()
-    {
-        if ($this->id !== null) {
-            $result = $this->builder
-                ->table($this->table)
-                ->where('id', $this->id)
-                ->update($this->data);
-            return $result;
-        }
-        $newId = $this->builder
-            ->table($this->table)
-            ->insert($this->data);
-
-        if ($newId) {
-            $this->id = $newId;
-            $this->data['id'] = $newId;
-            return $newId;
-        }
-        return false;
-    }
+//    public function save()
+//    {
+//        if ($this->id !== null) {
+//            $result = $this->builder
+//                ->table($this->table)
+//                ->where('id', $this->id)
+//                ->update($this->data);
+//            return $result;
+//        }
+//        $newId = $this->builder
+//            ->table($this->table)
+//            ->insert($this->data);
+//
+//        if ($newId) {
+//            $this->id = $newId;
+//            $this->data['id'] = $newId;
+//            return $newId;
+//        }
+//        return false;
+//    }
 
     public function load(?int $id = null): self
     {
@@ -86,13 +88,15 @@ class Tags extends AbstractModel implements Model
     {
            $existing = $this->findByName($name);
     if ($existing) {
-        $tag = new Tags();
+        $container = Application::getInstance()->getContainer();
+        $tag = $container->get(Tags::class);
         $tag->setData($existing);
         $tag->setId($existing['id']);
         return $tag;
     }
 
-    $tag = new Tags();
+    $container = Application::getInstance()->getContainer();
+    $tag = $container->get(Tags::class);
     $tag->setData(['name' => $name]);
     $tag->save();
     return $tag;
@@ -100,5 +104,10 @@ class Tags extends AbstractModel implements Model
     public function getName(): string
     {
         return $this->data['name'] ?? '';
+    }
+
+    protected function getTable(): string
+    {
+        return $this->table;
     }
 }

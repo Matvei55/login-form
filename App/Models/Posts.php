@@ -1,5 +1,6 @@
 <?php
 namespace App\Models;
+use App\Core\Application;
 use App\Models\Tags;
 
 
@@ -8,34 +9,33 @@ class Posts extends AbstractModel implements Model
     private string $table = 'posts';
     private ?Users $user = null;
     private array $tags = [];
-    private Tags $tag;
 
 
-    public function __construct()
+
+    public function __construct(private Tags $tag)
     {
         parent::__construct();
-        $this->tag = new Tags();
     }
-    public function save()
-    {
-        if ($this->id !== null) {
-            $result = $this->builder
-                ->table($this->table)
-                ->where('id', $this->id)
-                ->update($this->data);
-            return $result;
-        }
-        $newId = $this->builder
-            ->table($this->table)
-            ->insert($this->data);
-
-        if ($newId) {
-            $this->id = $newId;
-            $this->data['id'] = $newId;
-            return $newId;
-        }
-        return false;
-    }
+//    public function save()
+//    {
+//        if ($this->id !== null) {
+//            $result = $this->builder
+//                ->table($this->table)
+//                ->where('id', $this->id)
+//                ->update($this->data);
+//            return $result;
+//        }
+//        $newId = $this->builder
+//            ->table($this->table)
+//            ->insert($this->data);
+//
+//        if ($newId) {
+//            $this->id = $newId;
+//            $this->data['id'] = $newId;
+//            return $newId;
+//        }
+//        return false;
+//    }
 
     public function load(?int $id = null): self
     {
@@ -80,7 +80,8 @@ class Posts extends AbstractModel implements Model
     public function getUser(): Users
     {
         if ($this->user === null) {
-            $user = new Users();
+            $container  =Application::getInstance()->getContainer();
+            $user = $container->get(Users::class);
             $user->load($this->data['user_id']);
             $this->user = $user;
         }
@@ -149,7 +150,8 @@ class Posts extends AbstractModel implements Model
 
         $posts = [];
         foreach ($postsData as $data) {
-            $post = new Posts();
+            $container  =Application::getInstance()->getContainer();
+            $post = $container->get(Posts::class);
             $post->setData($data);
             $post->setId($data['id']);
             $posts[] = $post;
@@ -231,6 +233,18 @@ class Posts extends AbstractModel implements Model
     public function getContent(): string
     {
         return $this->data['content'] ?? '';
+    }
+
+    protected function getTable(): string
+    {
+        return $this->table;
+    }
+
+    protected function saveAfter():void
+    {
+        error_log("пост {$this->id} создан");
+        error_log("название" . ($this->data['title']));
+        error_log("автор " . ($this->data['user_id']));
     }
 
 }
