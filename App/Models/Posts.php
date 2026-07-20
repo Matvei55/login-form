@@ -1,6 +1,7 @@
 <?php
 namespace App\Models;
 use App\Core\Application;
+use App\Core\QueryBuilder;
 use App\Models\Tags;
 
 
@@ -12,30 +13,10 @@ class Posts extends AbstractModel implements Model
 
 
 
-    public function __construct(private Tags $tag)
+    public function __construct(QueryBuilder $builder,private Tags $tag)
     {
-        parent::__construct();
+        parent::__construct($builder);
     }
-//    public function save()
-//    {
-//        if ($this->id !== null) {
-//            $result = $this->builder
-//                ->table($this->table)
-//                ->where('id', $this->id)
-//                ->update($this->data);
-//            return $result;
-//        }
-//        $newId = $this->builder
-//            ->table($this->table)
-//            ->insert($this->data);
-//
-//        if ($newId) {
-//            $this->id = $newId;
-//            $this->data['id'] = $newId;
-//            return $newId;
-//        }
-//        return false;
-//    }
 
     public function load(?int $id = null): self
     {

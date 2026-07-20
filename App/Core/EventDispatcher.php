@@ -1,10 +1,16 @@
 <?php
 namespace App\Core;
 
+use App\Container\ContainerInterface;
+
 class EventDispatcher
 {
     private array $listeners = []; //список слушателей для каждого события
 
+    public function __construct(
+        private ContainerInterface $container
+    )
+    {}
     public function addListener(string $eventClass, string $listenerClass): void //добавляю слушателя
     {
         if(!isset($this->listeners[$eventClass])){
@@ -21,7 +27,7 @@ class EventDispatcher
         }
         foreach($this->listeners[$eventClass] as $listenerClass){
             if(class_exists($listenerClass)){
-                $listener = new $listenerClass;
+                $listener = $this->container->get($listenerClass);
                 $listener->handle($event);
             }
         }

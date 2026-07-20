@@ -2,16 +2,18 @@
 namespace App\Middleware;
 
 use App\Core\Request;
+use App\Core\Session;
 
 class LoggerMiddleware extends Middleware 
 {
     private string $logFile = '/var/www/html/logs.json';
 
+    public function __construct(private Session $session)
+    {}
     public function handle(Request $request, callable $next)
     {
         $this->logRequest($request);
-        $response = $next($request);
-        return $response;
+        return $next($request);
     }
 
     private function logRequest(Request $request): void
@@ -20,7 +22,7 @@ class LoggerMiddleware extends Middleware
             'timestamp' => date('Y-m-d H:i:s'),
             'method'    => $request->getMethod(),
             'uri'       => $request->getUri(),
-            'session_id'=> session_id() ?? 'none',
+            'session_id'=> $this->session->get('_id') ?? 'none',
         ];
         $this->writeLog($log);
     }

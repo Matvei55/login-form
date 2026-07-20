@@ -8,16 +8,11 @@ abstract class AbstractModel
 {
     protected array $data = [];
     protected ?int $id = null;
-    public QueryBuilder $builder;
 
-    public function __construct()
-    {
-        $this->init();
-    }
-    public function init()
-    {
-        $this->builder = new QueryBuilder();
-    }
+    public function __construct(
+        protected QueryBuilder $builder
+    )
+    {}
 
     public function getData(): array
     {

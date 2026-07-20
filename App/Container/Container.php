@@ -123,11 +123,11 @@ class Container implements ContainerInterface
         foreach($files as $file) {
             $className= basename($file, '.php');
             $fullClassName = $namespace ? $namespace . '\\' . $className : $className;
-        }
-        if(class_exists($fullClassName) && !$this->has($fullClassName)) {
-            $reflection = new \ReflectionClass($fullClassName);
-            if($reflection->isInstantiable()) {
-                $this->bind($fullClassName);
+            if(class_exists($fullClassName) && !$this->has($fullClassName)) {
+                $reflection = new \ReflectionClass($fullClassName);
+                if($reflection->isInstantiable()) {
+                    $this->bind($fullClassName);
+                }
             }
         }
     }

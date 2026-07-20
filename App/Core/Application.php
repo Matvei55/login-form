@@ -63,9 +63,6 @@ class Application
             View::class,
             Database::class,
             Router::class,
-            GuestMiddleware::class,
-            AuthMiddleware::class,
-            LoggerMiddleware::class,
         ];
 
         foreach ($singletons as $class) { //бд использует свою логику создания через замыкание
@@ -123,7 +120,7 @@ class Application
 
                 if($reflection->implementsInterface(MiddlewareInterface::class)) {
                     $this->container->bind($fullClassName);
-                    error_log("✅ Зарегистрирован middleware: " . $fullClassName);
+                    error_log(" Зарегистрирован middleware: " . $fullClassName);
                 }
             }
         }
@@ -139,16 +136,16 @@ class Application
     {
     if (self::$instance === null) {
         $container = new Container();
+
         $get = new Get();
         $post = new Post();
-
         $request = new Request($get, $post);
 
         self::$instance = new self(
             $container,
             new Router($request),
             $request,
-            new EventDispatcher()
+            new EventDispatcher($container)
         );
     }
     return self::$instance;
