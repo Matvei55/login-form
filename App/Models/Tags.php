@@ -2,15 +2,20 @@
 
 namespace App\Models;
 use App\Core\Application;
+use App\Core\EventDispatcher;
+use App\Core\EventDispatcherInterface;
 use App\Core\QueryBuilder;
 
 class Tags extends AbstractModel implements Model
 {
     private string $table = 'tags';
 
-    public function __construct(QueryBuilder $builder)
+    public function __construct(
+        QueryBuilder $builder,
+        EventDispatcherInterface $dispatcher,
+    )
     {
-        parent::__construct($builder);
+        parent::__construct($builder, $dispatcher);
     }
 
     public function load(?int $id = null): self
@@ -62,8 +67,7 @@ class Tags extends AbstractModel implements Model
             ->fetchAll();
         $tags = [];
         foreach ($tagsData as $data) {
-            $container = Application::getInstance()->getContainer();
-            $tag = $container->get(Tags::class);
+            $tag = new Tags($this->builder, $this->dispatcher);
             $tag->setData($data);
             $tag->setId($data['id']);
             $tags[] = $tag;

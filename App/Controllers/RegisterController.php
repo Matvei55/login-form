@@ -66,9 +66,6 @@ class RegisterController extends Controller
             $this->session->setUser($userId);
             $this->setSuccess("Добро пожаловать, {$username}!");
             $this->redirect('/posts');
-        } else {
-            $this->setError('Пользователь с таким именем уже существует');
-            $this->redirect('/register');
         }
     }
 }

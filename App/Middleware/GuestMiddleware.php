@@ -3,7 +3,6 @@ namespace App\Middleware;
 
 use App\Core\Request;
 use App\Core\Session;
-use App\Models\Tags;
 
 class GuestMiddleware extends Middleware implements MiddlewareInterface
 {

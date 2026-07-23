@@ -12,6 +12,7 @@ use App\Middleware\MiddlewareInterface;
 use App\Middleware\AuthMiddleware;
 use App\Middleware\GuestMiddleware;
 use App\Middleware\LoggerMiddleware;
+use App\Core\EventDispatcherInterface;
 
 class Application
 {
@@ -57,6 +58,12 @@ class Application
 
     private function registerSingletons(): void //регистрирую синглетоны
     {
+        $this->container->singleton(
+            EventDispatcherInterface::class,
+            function ($c) {
+                return new EventDispatcher($c);
+            }
+        );
         $singletons = [
             Request::class,
             Session::class,

@@ -1,14 +1,18 @@
 <?php
 namespace App\Models;
 use App\Core\QueryBuilder;
+use App\Core\EventDispatcherInterface;
 
 class Users extends AbstractModel implements Model
 {
     private string $table = 'users';//здесь имя таблицы
 
-    public function __construct(QueryBuilder $builder)
+    public function __construct(
+        QueryBuilder $builder,
+        EventDispatcherInterface $dispatcher,
+    )
     {
-        parent::__construct($builder);
+        parent::__construct($builder, $dispatcher);
     }
     protected function saveAfter():void
     {

@@ -1,8 +1,8 @@
 <?php
 namespace App\Models;
 use App\Core\Application;
+use App\Core\EventDispatcherInterface;
 use App\Core\QueryBuilder;
-use App\Models\Tags;
 
 
 class Posts extends AbstractModel implements Model
@@ -13,9 +13,13 @@ class Posts extends AbstractModel implements Model
 
 
 
-    public function __construct(QueryBuilder $builder,private Tags $tag)
+    public function __construct(
+        QueryBuilder $builder,
+        private Tags $tag,
+        EventDispatcherInterface $dispatcher
+    )
     {
-        parent::__construct($builder);
+        parent::__construct($builder, $dispatcher);
     }
 
     public function load(?int $id = null): self

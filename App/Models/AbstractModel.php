@@ -2,7 +2,10 @@
 
 namespace App\Models;
 
+use App\Core\EventDispatcherInterface;
 use App\Core\QueryBuilder;
+use App\Events\ModelSavedEvent;
+use App\Events\ModelSavingEvent;
 
 abstract class AbstractModel
 {
@@ -10,7 +13,8 @@ abstract class AbstractModel
     protected ?int $id = null;
 
     public function __construct(
-        protected QueryBuilder $builder
+        protected QueryBuilder $builder,
+        protected EventDispatcherInterface $dispatcher
     )
     {}
 
@@ -52,6 +56,7 @@ abstract class AbstractModel
 
     public function save()
     {
+        $this->dispatcher->dispatch(new ModelSavingEvent($this));
         $this->saveBefore();
         if($this->id !== null) {
             $result = $this->builder
@@ -69,6 +74,10 @@ abstract class AbstractModel
             }else{
                 $result = false;
             }
+        }
+        if($result) {
+            $this->saveAfter();
+            $this->dispatcher->dispatch(new ModelSavedEvent($this));
         }
         return $result;
     }

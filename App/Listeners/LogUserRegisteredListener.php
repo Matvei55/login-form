@@ -1,19 +1,20 @@
 <?php
 namespace App\Listeners;
 
-use App\Events\UserRegisteredEvent;
+use App\Events\ModelSavedEvent;
+use App\Models\Users;
 
 class LogUserRegisteredListener extends Listener
 {
     public function handle($event): void
     {
-        if(!$event instanceof UserRegisteredEvent){
+        if (!$event instanceof ModelSavedEvent) {
             return;
         }
-        $userData = $event->user->getData();
-        $username = $userData['name'] ?? 'неизвестно';
-        $userId = $event->user->getId() ?? 'новый';
-
-        error_log("[СОБЫТИЕ] Зарегистрирован новый пользователь: '$username'");
+        $model = $event->model;
+        if (!$model instanceof Users) {
+            return;
+        }
+        error_log("📝 пользователь  #{$model->getId()} сохранён");
     }
 }

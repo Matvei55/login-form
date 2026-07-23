@@ -3,7 +3,7 @@ namespace App\Core;
 
 use App\Container\ContainerInterface;
 
-class EventDispatcher
+class EventDispatcher implements EventDispatcherInterface
 {
     private array $listeners = []; //список слушателей для каждого события
 

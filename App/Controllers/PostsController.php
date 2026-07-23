@@ -10,7 +10,6 @@ use App\Models\Posts;
 use App\Models\Tags;
 use App\Models\Users;
 use App\Core\Request;
-use App\Container\ContainerInterface;
 use App\Middleware\AuthMiddleware;
 
 class PostsController extends Controller
@@ -90,9 +89,6 @@ class PostsController extends Controller
                     $this->postModel->attachTag($tag);
                 }
             }
-            $event = new PostCreatedEvent($this->postModel, $user);
-            Application::getInstance()->getDispatcher()->dispatch($event);
-
             $this->setSuccess('Пост успешно создан!');
         }
 
