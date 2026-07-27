@@ -2,7 +2,7 @@
 
 use Phinx\Migration\AbstractMigration;
 
-final class AddRoleToUsers extends AbstractMigration
+class AddRoleToUsers extends AbstractMigration
 {
     public function up()
     {
