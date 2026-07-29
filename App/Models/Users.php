@@ -1,5 +1,6 @@
 <?php
 namespace App\Models;
+use App\Core\Application;
 use App\Core\QueryBuilder;
 use App\Core\EventDispatcherInterface;
 
@@ -10,8 +11,8 @@ class Users extends AbstractModel implements Model
     public function __construct(
         QueryBuilder $builder,
         EventDispatcherInterface $dispatcher,
-    )
-    {
+        private Subscriptions $subscriptionModel,
+    ){
         parent::__construct($builder, $dispatcher);
     }
     protected function saveAfter():void
@@ -129,5 +130,21 @@ class Users extends AbstractModel implements Model
     public function getName(): string
     {
         return $this->data['name'] ?? '';
+    }
+    public function getFollowers(): array
+    {
+        if (!$this->id) {
+            return [];
+        }
+
+        $result = $this->subscriptionModel->getFollowers($this->id);
+        $container = Application::getInstance()->getContainer();
+        $followers = [];
+        foreach ($result as $row) {
+            $user = $container->get(Users::class);
+            $user->load($row['follower_id']);
+            $followers[] = $user;
+        }
+        return $followers;
     }
 }
