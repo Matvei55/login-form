@@ -138,13 +138,35 @@ class Users extends AbstractModel implements Model
         }
 
         $result = $this->subscriptionModel->getFollowers($this->id);
-        $container = Application::getInstance()->getContainer();
         $followers = [];
         foreach ($result as $row) {
-            $user = $container->get(Users::class);
+            $user = new static(
+                $this->builder,
+                $this->dispatcher,
+                $this->subscriptionModel,
+            );
             $user->load($row['follower_id']);
             $followers[] = $user;
         }
         return $followers;
+    }
+
+    public function getFollowing(): array
+    {
+        if (!$this->id) {
+            return [];
+        }
+        $result = $this->subscriptionModel->getFollowing($this->id);
+        $following = [];
+        foreach ($result as $row) {
+            $user = new static(
+                $this->builder,
+                $this->dispatcher,
+                $this->subscriptionModel,
+            );
+            $user->load($row['author_id']);
+            $following[] = $user;
+        }
+        return $following;
     }
 }

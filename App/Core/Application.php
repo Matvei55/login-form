@@ -3,6 +3,7 @@ namespace App\Core;
 
 use App\Container\Container;
 use App\Container\ContainerInterface;
+use App\Events\ModelSavedEvent;
 use App\Events\PostCreatedEvent;
 use App\Events\UserRegisteredEvent;
 use App\Listeners\LogPostCreatedListener;
@@ -135,8 +136,8 @@ class Application
 
     private function registerEvents(): void
     {
-        $this->dispatcher->addListener(PostCreatedEvent::class, LogPostCreatedListener::class);
-        $this->dispatcher->addListener(UserRegisteredEvent::class, LogUserRegisteredListener::class);
+        $this->dispatcher->addListener(ModelSavedEvent::class, LogPostCreatedListener::class);
+        $this->dispatcher->addListener(ModelSavedEvent::class, LogUserRegisteredListener::class);
     }
 
     public static function getInstance(): self

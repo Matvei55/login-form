@@ -16,7 +16,8 @@ class Posts extends AbstractModel implements Model
     public function __construct(
         QueryBuilder $builder,
         private Tags $tag,
-        EventDispatcherInterface $dispatcher
+        EventDispatcherInterface $dispatcher,
+        private Subscriptions $subscriptionModel
     )
     {
         parent::__construct($builder, $dispatcher);
@@ -65,8 +66,11 @@ class Posts extends AbstractModel implements Model
     public function getUser(): Users
     {
         if ($this->user === null) {
-            $container  =Application::getInstance()->getContainer();
-            $user = $container->get(Users::class);
+            $user = new Users(
+                $this->builder,
+                $this->dispatcher,
+                $this->subscriptionModel
+            );
             $user->load($this->data['user_id']);
             $this->user = $user;
         }
@@ -135,8 +139,12 @@ class Posts extends AbstractModel implements Model
 
         $posts = [];
         foreach ($postsData as $data) {
-            $container  =Application::getInstance()->getContainer();
-            $post = $container->get(Posts::class);
+            $post = new static(
+                $this->builder,
+                $this->tag,
+                $this->dispatcher,
+                $this->subscriptionModel
+            );
             $post->setData($data);
             $post->setId($data['id']);
             $posts[] = $post;
