@@ -251,3 +251,4 @@ class Users extends AbstractModel implements Model
         return $this->getRole() === 'user';
     }
 }
+//1
