@@ -1,8 +1,10 @@
 <?php
 namespace App\Models;
 
+use App\Core\Application;
 use App\Core\QueryBuilder;
 use App\Core\EventDispatcherInterface;
+use Cake\Core\App;
 
 class Categories extends AbstractModel implements Model
 {
@@ -11,7 +13,6 @@ class Categories extends AbstractModel implements Model
     public function __construct(
         QueryBuilder $builder,
         EventDispatcherInterface $dispatcher,
-        private Posts $postModel
     ){
         parent::__construct($builder, $dispatcher);
     }
@@ -64,6 +65,8 @@ class Categories extends AbstractModel implements Model
         if(!$this->id){
             return [];
         }
+        $container = Application::getInstance()->getContainer();
+        $postModel = $container->get(Posts::class);
         $postData=  $this->builder
             ->table('posts')
             ->where('category_id', $this->id)
@@ -71,7 +74,7 @@ class Categories extends AbstractModel implements Model
 
         $posts =  [];
         foreach ($postData as $data){
-            $post= $this->postModel->load($data['id']);
+            $post= $postModel->load($data['id']);
             if($post->getData()){
                 $posts[] = $post;
             }

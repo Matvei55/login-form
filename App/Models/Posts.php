@@ -17,7 +17,7 @@ class Posts extends AbstractModel implements Model
         QueryBuilder $builder,
         private Tags $tag,
         EventDispatcherInterface $dispatcher,
-        private Subscriptions $subscriptionModel
+        private Subscriptions $subscriptionModel,
     )
     {
         parent::__construct($builder, $dispatcher);
@@ -143,7 +143,7 @@ class Posts extends AbstractModel implements Model
                 $this->builder,
                 $this->tag,
                 $this->dispatcher,
-                $this->subscriptionModel
+                $this->subscriptionModel,
             );
             $post->setData($data);
             $post->setId($data['id']);
@@ -238,6 +238,89 @@ class Posts extends AbstractModel implements Model
         error_log("пост {$this->id} создан");
         error_log("название" . ($this->data['title']));
         error_log("автор " . ($this->data['user_id']));
+    }
+
+    public function setCategory(Categories $category): self
+    {
+        $this->data['category'] = $category->getId();
+        return $this;
+    }
+    public function getCategory(): ?Categories
+    {
+        if($this->category === null && !empty($this->data['category_id'])) {
+            $container = Application::getInstance()->getContainer();
+            $category = $container->get(Categories::class);
+            $category->load($this->data['category_id']);
+            $this->category = $category;
+        }
+        return $this->category;
+    }
+    public function getCategoryName(): string
+    {
+        $category = $this->getCategory();
+        return $category ? $category->getData()['title'] ?? '': '';
+    }
+
+    public function getComments():array
+    {
+        if(!$this->id){
+            return [];
+        }
+        return $this->builder
+            ->table('comments')
+            ->where('post_id', $this->id)
+            ->where('parent_id', null)
+            ->orderBy('created_at', 'ASC')
+            ->fetchAll();
+    }
+    public function getCommentsWithReplies():array
+    {
+        if(!$this->id){
+            return [];
+        }
+        $commentsData = $this->builder
+            ->table('comments')
+            ->where('post_id', $this->id)
+            ->orderBy('created_at', 'ASC')
+            ->fetchAll();
+        $comments = [];
+        $replies = [];
+
+        foreach ($commentsData as $comment) {
+            if($comment['parent_id'] === null) {
+                $comments[] = $comment;
+            }else{
+                $replies[$comment['parent_id']][] = $comment;
+            }
+        }
+        foreach ($comments as &$comment) {
+            $comment['replies'] = $replies[$comment['id']] ?? [];
+        }
+        return $comments;
+    }
+    public function getCommentsCount():int
+    {
+        if(!$this->id){
+            return 0;
+        }
+        return $this->builder
+            ->table('comments')
+            ->where('post_id', $this->id)
+            ->where('status', 'approved')
+            ->count();
+
+    }
+    public function getApprovedComments():array
+    {
+        if(!$this->id){
+            return [];
+        }
+        return $this->builder
+            ->table('comments')
+            ->where('post_id', $this->id)
+            ->where('status', 'approved')
+            ->orderBy('created_at', 'ASC')
+            ->fetchAll();
     }
 
 }

@@ -8,7 +8,7 @@ class Container implements ContainerInterface
 {
     private array $bindings = [];
     private array $instances = [];
-
+    private array $resolving = [];
     public function bind(string $abstract, $concrete = null ): void
     {
         if($concrete === null){
@@ -68,49 +68,57 @@ class Container implements ContainerInterface
 
     private function resolveClass(string $className)
     {
-        $reflection = new \ReflectionClass($className);
-
-        if (!$reflection->isInstantiable()) {
-            throw new ContainerException("Класс не может быть создан: $className");
+        if(in_array($className, $this->resolving)){
+            throw new \Exception("циклическая зависимость: " . implode(' ->', $this->resolving) . "-> $className");
         }
+        $this->resolving[] = $className;
+        try {
+            $reflection = new \ReflectionClass($className);
 
-        $constructor = $reflection->getConstructor();
+            if (!$reflection->isInstantiable()) {
+                throw new ContainerException("Класс не может быть создан: $className");
+            }
 
-        if ($constructor === null) {
-            return $reflection->newInstance();
-        }
+            $constructor = $reflection->getConstructor();
 
-        $parameters = $constructor->getParameters();
-        $dependencies = [];
+            if ($constructor === null) {
+                return $reflection->newInstance();
+            }
 
-        foreach($parameters as $parameter) {
-            $type = $parameter->getType();
+            $parameters = $constructor->getParameters();
+            $dependencies = [];
 
-            if($type === null) {
-                if($parameter->isDefaultValueAvailable()){
-                    $dependencies[] = $parameter->getDefaultValue();
-                    continue;
+            foreach ($parameters as $parameter) {
+                $type = $parameter->getType();
+
+                if ($type === null) {
+                    if ($parameter->isDefaultValueAvailable()) {
+                        $dependencies[] = $parameter->getDefaultValue();
+                        continue;
+                    }
+                    throw new ContainerException("не удалось разрешить параметр: {$parameter->getName()}");
                 }
-                throw new ContainerException("не удалось разрешить параметр: {$parameter->getName()}");
-            }
-            $typeName= $type->getName();
+                $typeName = $type->getName();
 
-            if($type->isBuiltin()) {
-                if($parameter->isDefaultValueAvailable()){
-                    $dependencies[] = $parameter->getDefaultValue();
-                    continue;
+                if ($type->isBuiltin()) {
+                    if ($parameter->isDefaultValueAvailable()) {
+                        $dependencies[] = $parameter->getDefaultValue();
+                        continue;
+                    }
+                    throw new ContainerException("не удалось разрешить параметр: {$parameter->getName()}");
                 }
-                throw new ContainerException("не удалось разрешить параметр: {$parameter->getName()}");
+                if ($this->has($typeName) || class_exists($typeName)) {
+                    $dependencies[] = $this->get($typeName);
+                } elseif ($parameter->isDefaultValueAvailable()) {
+                    $dependencies[] = $parameter->getDefaultValue();
+                } else {
+                    throw new ContainerException("не удалось разрешить зависимость: $typeName");
+                }
             }
-            if($this->has($typeName) || class_exists($typeName)){
-                $dependencies[] = $this->get($typeName);
-            }elseif ($parameter->isDefaultValueAvailable()){
-                $dependencies[] =$parameter->getDefaultValue();
-            }else{
-                throw new ContainerException("не удалось разрешить зависимость: $typeName");
-            }
+            return $reflection->newInstanceArgs($dependencies);
+        } finally {
+            array_pop($this->resolving);
         }
-        return $reflection->newInstanceArgs($dependencies);
     }    
 
     public function registerDirectory(string $directory, string $namespace = ''):void

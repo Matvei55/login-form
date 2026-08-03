@@ -131,6 +131,7 @@ class Users extends AbstractModel implements Model
     {
         return $this->data['name'] ?? '';
     }
+
     public function getFollowers(): array
     {
         if (!$this->id) {
@@ -168,5 +169,85 @@ class Users extends AbstractModel implements Model
             $following[] = $user;
         }
         return $following;
+    }
+    public function isFollowing(int $authorId): bool
+    {
+        if (!$this->id) {
+            return false;
+        }
+        return $this->subscriptionModel->isSubscribed($this->id, $authorId);
+    }
+    public function follow(int $authorId): bool
+    {
+        if(!$this->id || $this->id === $authorId){
+            return false;
+        }
+        return $this->subscriptionModel->subscribe($this->id, $authorId);
+    }
+    public function unfollow(int $authorId): bool
+    {
+        if(!$this->id){
+            return false;
+        }
+        return $this->subscriptionModel->unsubscribe($this->id, $authorId);
+    }
+    public function getFollowersCount(): int
+    {
+        if (!$this->id) {
+            return 0;
+        }
+        return $this->builder
+            ->table('subscriptions')
+            ->where('author_id', $this->id)
+            ->count();
+    }
+    public function getFollowingCount(): int
+    {
+        if (!$this->id) {
+            return 0;
+        }
+        return $this->builder
+            ->table('subscriptions')
+            ->where('follower_id', $this->id)
+            ->count();
+    }
+
+    public function getComments():array
+    {
+        if (!$this->id) {
+            return [];
+        }
+        return $this->builder
+            ->table('comments')
+            ->where('user_id', $this->id)
+            ->orderBy('created_id', 'DESC')
+            ->fetchAll();
+    }
+    public function getCommentsCount(): int
+    {
+        if (!$this->id) {
+            return 0;
+        }
+        return $this->builder
+            ->table('comments')
+            ->where('user_id', $this->id)
+            ->count();
+    }
+
+    public function getRole():string
+    {
+        return $this->data['role'] ?? 'user';
+    }
+    public function isAdmin(): bool
+    {
+        return $this->getRole() === 'admin';
+    }
+    public function isModerator(): bool
+    {
+        return $this->getRole() === 'moderator';
+    }
+    public function isUser(): bool
+    {
+        return $this->getRole() === 'user';
     }
 }
