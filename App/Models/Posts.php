@@ -242,7 +242,7 @@ class Posts extends AbstractModel implements Model
 
     public function setCategory(Categories $category): self
     {
-        $this->data['category'] = $category->getId();
+        $this->data['category_id'] = $category->getId();
         return $this;
     }
     public function getCategory(): ?Categories

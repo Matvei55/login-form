@@ -9,7 +9,7 @@ class Comments extends AbstractModel implements Model
     protected $table = 'comments';
 
     public function __construct(
-        QueryBuilder $builder,
+        public QueryBuilder $builder,
         EventDispatcherInterface $dispatcher,
         private Users $userModel,
         private Posts $postModel,

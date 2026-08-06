@@ -220,7 +220,7 @@ class Users extends AbstractModel implements Model
         return $this->builder
             ->table('comments')
             ->where('user_id', $this->id)
-            ->orderBy('created_id', 'DESC')
+            ->orderBy('created_at', 'DESC')
             ->fetchAll();
     }
     public function getCommentsCount(): int
