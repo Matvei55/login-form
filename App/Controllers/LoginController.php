@@ -2,11 +2,11 @@
 namespace App\Controllers;
 
 use App\Core\Controller;
-use App\Models\Users;
 use App\Core\Request;
-use App\Core\View;
 use App\Core\Session;
-use App\Middleware\GuestMiddleware;
+use App\Core\View;
+use App\Services\UserService;
+use App\DTO\LoginUserDTO;
 class LoginController extends Controller
 {
 
@@ -14,21 +14,17 @@ class LoginController extends Controller
         Request $request,
         View $view,
         Session $session,
-        private Users $userModel
+        private UserService $userService
     ){
-        parent::__construct($request,$view,$session);
-    }
-
-    protected function getMiddlewareConfig(): array
-    {
-        return [
-            'index' => [GuestMiddleware::class],
-            'store' => [GuestMiddleware::class],
-        ];
+        parent::__construct($request, $view, $session);
     }
 
     public function index(Request $request): void
     {
+        if($this->session->has('user_id')){
+            $this->redirect('/posts');
+            return;
+        }
         $data = [
             'errors' => $this->getErrors(),
             'success' => $this->getSuccess(),
@@ -40,37 +36,22 @@ class LoginController extends Controller
 
     public function store(Request $request): void
     {
-        $username = trim($request->postParam('username', ''));
-        $password = trim($request->postParam('password', ''));
-
-        if (empty($username)) {
-            $this->setError('Имя пользователя обязательно');
+        try {
+            $dto = new LoginUserDTO(
+                trim($request->postParam('username', '')),
+                trim($request->postParam('password', ''))
+            );
+            $user = $this->userService->login($dto);
+            if($user){
+                $this->session->setUser($user['id']);
+                $this->setSuccess("добро пожаловать, {$user['name']}!");
+                $this->redirect('/posts');
+                return;
+            }
+            $this->setError('неправильное имя пользователя или пароль');
+        }catch (\InvalidArgumentException $e) {
+            $this->setError($e->getMessage());
         }
-
-        if (empty($password)) {
-            $this->setError('Пароль обязателен');
-        }
-
-        if ($this->hasErrors()) {
-            $this->redirect('/login');
-            return;
-        }
-
-        $user = $this->userModel->findByName($username);
-
-        if ($user && password_verify($password, $user['password'])) {
-            $this->session->setUser($user['id']);
-            $this->setSuccess("Добро пожаловать, {$username}!");
-            $this->redirect('/posts');
-        } else {
-            $this->setError('Неправильное имя пользователя или пароль');
-            $this->redirect('/login');
-        }
-    }
-        public function logout(Request $request): void
-    {
-        $this->session->logout();
-        $this->setSuccess('Вы вышли из системы');
         $this->redirect('/login');
     }
 }

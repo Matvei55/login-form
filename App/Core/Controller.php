@@ -3,6 +3,7 @@
 namespace App\Core;
 
 use App\Container\ContainerInterface;
+use App\Models\Users;
 
 abstract class Controller
 {
@@ -11,10 +12,6 @@ abstract class Controller
         protected View $view,
         protected Session $session)
     {}
-
-    // abstract public function index(Request $request):void;
-    // abstract public function store(Request $request):void;
-
     protected function getMiddlewareConfig(): array
     {
         return [];
@@ -53,7 +50,8 @@ abstract class Controller
     {
         if($this->session->has('user_id')){
             $userId = $this->session->getUserId();
-            $userModel = new \App\Models\Users();
+            $container = Application::getInstance()->getContainer();
+            $userModel = $container->get(Users::Class);
             return $userModel->load($userId)->getData();
         }
         return null;

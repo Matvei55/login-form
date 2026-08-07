@@ -48,6 +48,7 @@ class Application
             __DIR__ . '/../Events' => 'App\\Events',
             __DIR__ . '/../Listeners' => 'App\\Listeners',
             __DIR__ . '/../Core' => 'App\\Core',
+            __DIR__ . '/../Services' => 'App\\Services',
         ];
 
         foreach ($directories as $path => $namespace) {

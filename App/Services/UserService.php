@@ -18,7 +18,7 @@ class UserService
     {
         $existing = $this->userModel->findByName($dto->username);
         if ($existing) {
-            throw new \Exception("пользователь с таким именем уже существует");
+            throw new \InvalidArgumentException("пользователь с таким именем уже существует");
         }
         $hashedPassword = password_hash($dto->password, PASSWORD_DEFAULT);
         $userId = $this->userModel->setData([

@@ -1,52 +1,38 @@
 <?php
 namespace App\Controllers;
 
-use App\Core\Application;
 use App\Core\Controller;
 use App\Core\Session;
 use App\Core\View;
-use App\Events\PostCreatedEvent;
-use App\Models\Posts;
-use App\Models\Tags;
-use App\Models\Users;
 use App\Core\Request;
-use App\Middleware\AuthMiddleware;
+use App\Services\PostService;
+use App\Services\CommentService;
+use App\DTO\CreatePostDTO;
 
 class PostsController extends Controller
 {
-    public function __construct(Request $request, View $view,Session $session ,private Users $userModel, private Posts $postModel, private Tags $tagModel)
-    {
+    public function __construct(
+        Request $request,
+        View $view,
+        Session $session,
+        private PostService $postService,
+    ){
         parent::__construct($request, $view, $session);
     }
 
-    public function getMiddlewareConfig():array
-    {
-        return [
-            'index' => [AuthMiddleware::class],
-            'store' => [AuthMiddleware::class],
-        ];
-    }
-    
     public function index(Request $request): void
     {
         $this->requireAuth();
 
         $userId = $this->session->getUserId();
-        $user = $this->userModel->load($userId);
-        $userPosts = $this->postModel->getPostsByUserId($user);
-
-        foreach ($userPosts as $post) {
-            $tags = $this->tagModel->getPostTags($post->getId());
-            $post->setTags($tags);
-        }
+        $userPosts = $this->postService->getUserPosts($userId);
 
         $data = [
-            'user' => $user->getData(),
+            'user' => $this->getUser(),
             'userPosts' => $userPosts,
             'errors' => $this->getErrors(),
             'success' => $this->getSuccess(),
         ];
-
         echo $this->render('posts', $data);
         $this->clearSession();
     }
@@ -54,44 +40,24 @@ class PostsController extends Controller
     public function store(Request $request): void
     {
         $this->requireAuth();
+        try{
+            $dto = new CreatePostDTO(
+                trim($request->postParam('title','')),
+                trim($request->postParam('content','')),
+                array_filter(array_map('trim',explode(',',$request->postParam('tags','')))),
+                $request->postParam('category_id') ? (int)$request->postParam('category_id') : null
+            );
+            $userId = $this->session->getUserId();
+            $postId = $this->postService->create($dto, $userId);
 
-        $title = trim($request->postParam('title', ''));
-        $content = trim($request->postParam('content', ''));
-        $tagsInput = trim($request->postParam('tags', ''));
-
-        if (empty($title)) {
-            $this->setError('Заголовок обязателен');
-        } elseif (mb_strlen($title) < 3) {
-            $this->setError('Заголовок минимум 3 символа');
-        }
-
-        if (empty($content)) {
-            $this->setError('Содержание обязательно');
-        }
-
-        if ($this->hasErrors()) {
-            $this->redirect('/posts');
-            return;
-        }
-
-        $user = $this->userModel->load($this->session->getUserId());
-        $postId = $this->postModel->setUser($user)
-            ->setData([
-                'title' => $title,
-                'content' => $content,
-            ])->save();
-
-        if ($postId) {
-            if (!empty($tagsInput)) {
-                $tagNames = array_unique(array_filter(explode(',', $tagsInput)));
-                foreach ($tagNames as $tagName) {
-                    $tag = $this->tagModel->findOrCreate($tagName);
-                    $this->postModel->attachTag($tag);
-                }
+            if ($postId) {
+                $this->setSuccess('пост успешно создан');
+            }else {
+                $this->setError('не удалось создать пост');
             }
-            $this->setSuccess('Пост успешно создан!');
+        }catch (\InvalidArgumentException $e){
+            $this->setError($e->getMessage());
         }
-
         $this->redirect('/posts');
     }
 }
