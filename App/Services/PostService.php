@@ -49,4 +49,27 @@ class PostService
         $user = $this->userModel->load($userId);
         return $this->postModel->getPostsByUserId($user);
     }
+    public function getPost(int $postId): ?Posts
+    {
+        $post = $this->postModel->load($postId);
+        return $post->getData() ? $post : null;
+    }
+    public function approvedPost(int $postId): bool
+    {
+        $post = $this->postModel->load($postId);
+        if(!$post->getData()){
+            throw new \InvalidArgumentException('пост не найден');
+        }
+        $post->approve();
+        return (bool) $post->save();
+    }
+    public function rejectPost(int $postId): bool
+    {
+        $post = $this->postModel->load($postId);
+        if(!$post->getData()){
+            throw new \InvalidArgumentException('пост не найден');
+        }
+        $post->reject();
+        return (bool) $post->save();
+    }
 }

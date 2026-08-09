@@ -10,7 +10,9 @@ abstract class Controller
     public function __construct(
         protected Request $request,
         protected View $view,
-        protected Session $session)
+        protected Session $session,
+        protected EventDispatcherInterface $dispatcher
+    )
     {}
     protected function getMiddlewareConfig(): array
     {
@@ -46,13 +48,13 @@ abstract class Controller
         }
     }
 
-    protected function getUser(): ?array
+    protected function getUser(): ?Users
     {
         if($this->session->has('user_id')){
             $userId = $this->session->getUserId();
             $container = Application::getInstance()->getContainer();
             $userModel = $container->get(Users::Class);
-            return $userModel->load($userId)->getData();
+            return $userModel->load($userId);
         }
         return null;
     }
@@ -112,5 +114,9 @@ abstract class Controller
     protected function hasErrors(): bool
     {
         return !empty($this->getErrors());
+    }
+    protected function dispatchEvent(object $event): void
+    {
+        $this->dispatcher->dispatch($event);
     }
 }

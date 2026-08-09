@@ -2,11 +2,13 @@
 namespace App\Controllers;
 
 use App\Core\Controller;
+use App\Core\EventDispatcher;
+use App\Core\EventDispatcherInterface;
 use App\Core\Session;
 use App\Core\View;
 use App\Core\Request;
+use App\Events\PostPendingModerationEvent;
 use App\Services\PostService;
-use App\Services\CommentService;
 use App\DTO\CreatePostDTO;
 
 class PostsController extends Controller
@@ -15,9 +17,10 @@ class PostsController extends Controller
         Request $request,
         View $view,
         Session $session,
+        EventDispatcherInterface $dispatcher,
         private PostService $postService,
     ){
-        parent::__construct($request, $view, $session);
+        parent::__construct($request, $view, $session,$dispatcher);
     }
 
     public function index(Request $request): void
@@ -51,6 +54,10 @@ class PostsController extends Controller
             $postId = $this->postService->create($dto, $userId);
 
             if ($postId) {
+                $post = $this->postService->getPost($postId);
+                $user = $this->getUser();
+                $event = new PostPendingModerationEvent($post, $user);
+                $this->dispatchEvent($event);
                 $this->setSuccess('пост успешно создан');
             }else {
                 $this->setError('не удалось создать пост');

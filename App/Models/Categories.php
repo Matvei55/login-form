@@ -12,6 +12,7 @@ class Categories extends AbstractModel implements Model
     public function __construct(
         QueryBuilder $builder,
         EventDispatcherInterface $dispatcher,
+        private Posts $postModel
     ){
         parent::__construct($builder, $dispatcher);
     }
@@ -69,13 +70,12 @@ class Categories extends AbstractModel implements Model
             ->table('posts')
             ->where('category_id', $this->id)
             ->fetchAll();
-        $container = Application::getInstance()->getContainer();
         $posts= [];
         foreach($postData as $data){
-            $post = $container->get(Posts::class);
-            $post->setData($data);
-            $post->setId($data['id']);
-            $posts[] = $post;
+            $post = $this->postModel->load($data['id']);
+            if($post->getData()){
+                $posts[] = $post;
+            }
         }
         return $posts;
     }

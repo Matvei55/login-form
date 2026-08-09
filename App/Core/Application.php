@@ -4,16 +4,13 @@ namespace App\Core;
 use App\Container\Container;
 use App\Container\ContainerInterface;
 use App\Events\ModelSavedEvent;
-use App\Events\PostCreatedEvent;
-use App\Events\UserRegisteredEvent;
 use App\Listeners\LogPostCreatedListener;
 use App\Listeners\LogUserRegisteredListener;
-use App\Middleware\Middleware;
 use App\Middleware\MiddlewareInterface;
-use App\Middleware\AuthMiddleware;
-use App\Middleware\GuestMiddleware;
-use App\Middleware\LoggerMiddleware;
-use App\Core\EventDispatcherInterface;
+use App\Events\PostPendingModerationEvent;
+use App\Listeners\SendTelegramModerationRequest;
+use App\Core\HttpClient;
+use App\Services\TelegramService;
 
 class Application
 {
@@ -36,6 +33,7 @@ class Application
     {
         $this->registerAllClasses();
         $this->registerSingletons();
+        $this->registerServices();
         $this->registerControllers();
         $this->registerMiddleware();
     }
@@ -49,6 +47,7 @@ class Application
             __DIR__ . '/../Listeners' => 'App\\Listeners',
             __DIR__ . '/../Core' => 'App\\Core',
             __DIR__ . '/../Services' => 'App\\Services',
+            __DIR__ . '/../DTO' => 'App\\DTO',
         ];
 
         foreach ($directories as $path => $namespace) {
@@ -66,6 +65,7 @@ class Application
                 return new EventDispatcher($c);
             }
         );
+        $this->container->singleton(HttpClient::class);
         $singletons = [
             Request::class,
             Session::class,
@@ -85,6 +85,15 @@ class Application
                 }
             }
         }
+    }
+    private function registerServices(): void
+    {
+        $this->container->bind(TelegramService::class, function ($c) {
+            return new TelegramService(
+                $c->get(HttpClient::class),
+                $c->get(Config::class),
+            );
+        });
     }
 
     private function registerControllers(): void //нахожу контроллеры и регистрирую их
@@ -139,6 +148,7 @@ class Application
     {
         $this->dispatcher->addListener(ModelSavedEvent::class, LogPostCreatedListener::class);
         $this->dispatcher->addListener(ModelSavedEvent::class, LogUserRegisteredListener::class);
+        $this->dispatcher->addListener(PostPendingModerationEvent::class, SendTelegramModerationRequest::class);
     }
 
     public static function getInstance(): self

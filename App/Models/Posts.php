@@ -323,6 +323,28 @@ class Posts extends AbstractModel implements Model
             ->fetchAll();
     }
 
+    public function approve(): self
+    {
+        $this->data['status'] = 'approved';
+        return $this;
+    }
+    public function reject(): self
+    {
+        $this->data['status'] = 'rejected';
+        return $this;
+    }
+    public function isPending(): bool
+    {
+        return( $this->data['status'] ?? 'pending') === 'pending';
+    }
+    public function isApproved(): bool
+    {
+        return( $this->data['status'] ?? 'pending') === 'approved';
+    }
+    public function isRejected(): bool
+    {
+        return( $this->data['status'] ?? 'pending') === 'rejected';
+    }
 }
 
 

@@ -2,6 +2,7 @@
 namespace App\Controllers;
 
 use App\Core\Controller;
+use App\Core\EventDispatcherInterface;
 use App\Core\Request;
 use App\Core\View;
 use App\Core\Session;
@@ -11,9 +12,10 @@ class LogoutController extends Controller
     public function __construct(
         Request $request,
         View $view,
-        Session $session
+        Session $session,
+        EventDispatcherInterface $dispatcher
     ) {
-        parent::__construct($request, $view, $session);
+        parent::__construct($request, $view, $session,$dispatcher);
     }
 
     protected function getMiddlewareConfig(): array

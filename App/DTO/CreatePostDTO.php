@@ -16,7 +16,7 @@ class CreatePostDTO
         if (empty($this->title)) {
             throw new \InvalidArgumentException('заголовок обязателен');
         }
-        if(strlen($this->title) < 3) {
+        if(mb_strlen($this->title) < 3) {
             throw new \InvalidArgumentException('заголовок минимум 3 символа');
         }
         if (empty($this->content)) {

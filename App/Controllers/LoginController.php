@@ -2,6 +2,7 @@
 namespace App\Controllers;
 
 use App\Core\Controller;
+use App\Core\EventDispatcherInterface;
 use App\Core\Request;
 use App\Core\Session;
 use App\Core\View;
@@ -14,9 +15,10 @@ class LoginController extends Controller
         Request $request,
         View $view,
         Session $session,
+        EventDispatcherInterface $dispatcher,
         private UserService $userService
     ){
-        parent::__construct($request, $view, $session);
+        parent::__construct($request, $view, $session,$dispatcher);
     }
 
     public function index(Request $request): void
