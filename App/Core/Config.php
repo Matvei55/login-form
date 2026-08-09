@@ -30,7 +30,22 @@ class Config
             'session' => [
                 'lifetime' => (int) ($_ENV['SESSION_LIFETIME'] ?? 120),
             ],
+
         ];
+        $configPath = dirname($path) . '/config';
+        if(is_dir($configPath)) {
+            foreach (glob($configPath . '/*.php') as $file) {
+                $key = basename($file, '.php');
+                self::$config[$key] = require $file;
+            }
+        }
+        self::$config['proxy'] = [
+        'enabled' => true,
+        'host' => $_ENV['PROXY_HOST'] ?? '127.0.0.1',
+        'port' => (int) ($_ENV['PROXY_PORT'] ?? 1080),
+        'type' => $_ENV['PROXY_TYPE'] ?? 'socks5',
+        ];
+
     }
 
     public static function getDatabaseConfig(): array
@@ -51,6 +66,11 @@ class Config
         }
 
         return $value;
+    }
+
+    public static function getProxyConfig(): array
+    {
+        return self::$config['proxy'] ?? [];
     }
 }
 

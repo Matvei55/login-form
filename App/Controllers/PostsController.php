@@ -1,6 +1,7 @@
 <?php
 namespace App\Controllers;
 
+use App\Core\Application;
 use App\Core\Controller;
 use App\Core\EventDispatcher;
 use App\Core\EventDispatcherInterface;
@@ -10,6 +11,7 @@ use App\Core\Request;
 use App\Events\PostPendingModerationEvent;
 use App\Services\PostService;
 use App\DTO\CreatePostDTO;
+use App\Container\ContainerInterface;
 
 class PostsController extends Controller
 {
@@ -28,7 +30,7 @@ class PostsController extends Controller
         $this->requireAuth();
 
         $userId = $this->session->getUserId();
-        $userPosts = $this->postService->getUserPosts($userId);
+        $userPosts = $this->postService->getUserPosts($userId, 'approved');
 
         $data = [
             'user' => $this->getUser(),
@@ -57,6 +59,9 @@ class PostsController extends Controller
                 $post = $this->postService->getPost($postId);
                 $user = $this->getUser();
                 $event = new PostPendingModerationEvent($post, $user);
+                  $app = Application::getInstance();
+                  $dispatcher = $app->getDispatcher();
+                  $dispatcher->dispatch($event);
                 $this->dispatchEvent($event);
                 $this->setSuccess('пост успешно создан');
             }else {

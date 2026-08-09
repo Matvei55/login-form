@@ -32,7 +32,13 @@ class EventDispatcher implements EventDispatcherInterface
             }
         }
     }
+
+
     public function getListeners(string $eventClass): array //получаю всех слушателей события
+    {
+        return $this->listeners[$eventClass] ?? [];
+    }
+    public function getListenersForEvent(string $eventClass): array
     {
         return $this->listeners[$eventClass] ?? [];
     }

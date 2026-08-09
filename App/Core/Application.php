@@ -10,6 +10,7 @@ use App\Middleware\MiddlewareInterface;
 use App\Events\PostPendingModerationEvent;
 use App\Listeners\SendTelegramModerationRequest;
 use App\Core\HttpClient;
+use App\Services\PostService;
 use App\Services\TelegramService;
 
 class Application
@@ -114,7 +115,14 @@ class Application
                 $reflection = new \ReflectionClass($fullClassName); //рефлектион показывает структуру класса
                 if($reflection->isSubclassOf(Controller::class)) {
                     $this->container->bind($fullClassName, function ($c) use ($fullClassName) {
-                        return new $fullClassName($c);
+                        return new $fullClassName(
+                            $c->get(Request::class),
+                            $c->get(View::class),
+                            $c->get(Session::class),
+                            $c->get(EventDispatcherInterface::class),
+                            $c->get(PostService::class),
+                            $c
+                        );
                     });
                 }
             }
@@ -144,12 +152,28 @@ class Application
         }
     }
 
+//    private function registerEvents(): void
+//    {
+//        $this->dispatcher->addListener(ModelSavedEvent::class, LogPostCreatedListener::class);
+//        $this->dispatcher->addListener(ModelSavedEvent::class, LogUserRegisteredListener::class);
+//        $this->dispatcher->addListener(PostPendingModerationEvent::class, SendTelegramModerationRequest::class);
+//    }
     private function registerEvents(): void
-    {
-        $this->dispatcher->addListener(ModelSavedEvent::class, LogPostCreatedListener::class);
-        $this->dispatcher->addListener(ModelSavedEvent::class, LogUserRegisteredListener::class);
-        $this->dispatcher->addListener(PostPendingModerationEvent::class, SendTelegramModerationRequest::class);
-    }
+{
+    error_log("📝 [Application] Регистрируем события...");
+
+    $this->dispatcher->addListener(ModelSavedEvent::class, LogPostCreatedListener::class);
+    $this->dispatcher->addListener(ModelSavedEvent::class, LogUserRegisteredListener::class);
+
+    error_log("📝 [Application] Регистрируем PostPendingModerationEvent -> SendTelegramModerationRequest");
+    $this->dispatcher->addListener(PostPendingModerationEvent::class, SendTelegramModerationRequest::class);
+
+    // Проверка, что слушатель зарегистрирован
+    $listeners = $this->dispatcher->getListenersForEvent(PostPendingModerationEvent::class);
+    error_log("📋 [Application] Слушатели для PostPendingModerationEvent: " . print_r($listeners, true));
+
+    error_log("✅ [Application] События зарегистрированы");
+}
 
     public static function getInstance(): self
     {

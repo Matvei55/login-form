@@ -16,7 +16,7 @@ class TelegramService
         $this->chatId = $this->config->get('telegram.chat_id'); //читает id
     }
 
-    public function sendMessage(string $text,array $keyboard = null): array //отправить сообщение
+    public function sendMessage(string $text,?array $keyboard = null): array //отправить сообщение
     {
         $data = [
             'chat_id' => $this->chatId, //кому отправить
@@ -28,29 +28,56 @@ class TelegramService
         }
         return $this->httpClient->post($this->apiUrl . '/sendMessage', $data);//отправляем запрос к тг апи и получаем ответ
     }
-    public function sendPostForModeration(int $postId, string $title, string $content,string $author): array //отправить пост на модерацию
+//    public function sendPostForModeration(int $postId, string $title, string $content,string $author): array //отправить пост на модерацию
+//    {
+//        $text = "<b>новый пост на модерацию</b>\n\n";
+//        $text .= "<b>ID:</b> {$postId}\n";
+//        $text .= "<b>Автор:</b> {$author}\n";
+//        $text .="<b>Заголовок:</b> {$title}\n\n";
+//        $text .= "<b>Содержание:</b>\n . mb_substr($content, 0, 250) . (mb_strlen($content) > 200 ? '...' : '');";
+//        $keyboard = [
+//            'inline_keyboard' => [ //клавиатура с двумя кнопками
+//                [
+//                    [
+//                        'text' => 'Одобрить',
+//                        'callback_data' => "approve_post:{post_id}",
+//                    ],
+//                    [
+//                        'text' => 'Отклонить',
+//                        'callback_data' => "reject_post:{post_id}",
+//                    ]
+//                ]
+//            ]
+//        ];
+//        return $this->sendMessage($text, $keyboard);
+//    }
+    public function sendPostForModeration(int $postId, string $title, string $content, string $author): array
     {
-        $text = "<b>новый пост на модерацию</b>\n\n";
-        $text .= "<b>ID:</b> {$postId}\n";
-        $text .= "<b>Автор:</b> {$author}\n";
-        $text .="<b>Заголовок:</b> {$title}\n\n";
-        $text .= "<b>Содержание:</b>\n . mb_substr($content, 0, 250) . (mb_strlen($content) > 200 ? '...' : '');";
-        $keyboard = [
-            'inline_keyboard' => [ //клавиатура с двумя кнопками
+    $text = "<b>📝 Новый пост на модерацию</b>\n\n";
+    $text .= "<b>🆔 ID:</b> {$postId}\n";
+    $text .= "<b>👤 Автор:</b> {$author}\n";
+    $text .= "<b>📌 Заголовок:</b> {$title}\n\n";
+    $text .= "<b>📄 Содержание:</b>\n" . mb_substr($content, 0, 250) . (mb_strlen($content) > 250 ? '...' : '');
+
+    $keyboard = [
+        'inline_keyboard' => [
+            [
                 [
-                    [
-                        'text' => 'Одобрить',
-                        'callback_data' => "approve_post:{post_id}",
-                    ],
-                    [
-                        'text' => 'Отклонить',
-                        'callback_data' => "reject_post:{post_id}",
-                    ]
+                    'text' => '✅ Одобрить',
+                    'callback_data' => "approve_post:{$postId}",
+                ],
+                [
+                    'text' => '❌ Отклонить',
+                    'callback_data' => "reject_post:{$postId}",
                 ]
             ]
-        ];
-        return $this->sendMessage($text, $keyboard);
-    }
+        ]
+    ];
+
+    $result = $this->sendMessage($text, $keyboard);
+
+    return $result;
+}
     public function editMessageText(int $messageId, string $text): array //обновить сообщение(меняет текст и убирает кнопки)
     {
         $data = [

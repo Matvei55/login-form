@@ -130,12 +130,15 @@ class Posts extends AbstractModel implements Model
     }
 
     //функция должна возращать массив с моделями экзеипляра класса пост
-    public function getPostsByUserId(Users $user): array
+    public function getPostsByUserId(Users $user ,?string $status): array
     {
-        $postsData = $this->builder
+        $query = $this->builder
             ->table($this->table)
-            ->where('user_id', $user->getId())
-            ->fetchAll();
+            ->where('user_id', $user->getId());
+        if($status !== null) {
+            $query->where('status', $status);
+        }
+        $postsData= $query->fetchAll();
 
         $posts = [];
         foreach ($postsData as $data) {
