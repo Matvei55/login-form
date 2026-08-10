@@ -2,7 +2,7 @@
 
 Этот документ объединяет результаты аудита кодовой базы, архитектурный анализ пробелов фреймворка и детальный пошаговый план разработки на 5-7 дней. 
 
-*Статус на 9 августа 2026 года: проведен аудит коммитов от 09.08 (`08d6320`). Студент имплементировал HTTP-клиент (HttpClient), TelegramService, событие PostPendingModerationEvent и слушатель SendTelegramModerationRequest. В процессе аудита выявлена 1 фатальная ошибка вызова конструктора и 3 бага в TelegramService.*
+*Статус на 10 августа 2026 года: проведен аудит коммитов за 10.08 (`34cd160`, `29a08d4`). Студент полностью исправил критические баги вызова конструкторов контроллеров, ошибки конкатенации в TelegramService и создал работающий консольный демон Long Polling (`bin/telegram-poll.php`). День 6 выполнен полностью.*
 
 ---
 
@@ -12,57 +12,47 @@
 
 ### А. Критические ошибки (сломают запуск или логику автозагрузки)
 1. **Отсутствие зависимости `phpdotenv` и файла `.env`** `[Частично обойдено]`:
-   * **Что сделано**: Студент добавил проверку `if (!file_exists($path)) { return; }` в `Config::load()`. Теперь приложение не падает, если файла `.env` нет (используются дефолтные значения).
-   * **Проблема**: В `composer.json` по-прежнему нет зависимости `vlucas/phpdotenv`. Если создать файл `.env` в корне, автозагрузчик не найдет класс `Dotenv\Dotenv` и приложение упадет.
-   * **Решение**: Выполнить `composer require vlucas/phpdotenv` и создать реальный файл `.env` для гибкой настройки БД.
+   * **Что сделано**: Студент добавил загрузку Dotenv в `bin/telegram-poll.php` и проверку в `Config::load()`.
+   * **Проблема**: В `composer.json` по-прежнему нет явной зависимости `vlucas/phpdotenv`.
+   * **Решение**: Выполнить `composer require vlucas/phpdotenv`.
 2. **Баг авторегистрации в контейнере (`App/Container/Container.php`)** `[ИСПРАВЛЕНО]`:
-   * **Исправлено в коммите c0dad41**: Скобка цикла `foreach` в `registerDirectory()` перенесена. Теперь при сканировании директорий в контейнере корректно регистрируются все класс-файлы.
-3. **Фатальная ошибка `ArgumentCountError` в контроллерах (`PostsController`, `LoginController`, `RegisterController`)** `[КРИТИЧЕСКАЯ ОШИБКА]`:
-   * **Проблема**: В `Controller.php` добавлен 4-й обязательный параметр `protected EventDispatcherInterface $dispatcher`. При этом `PostsController`, `LoginController` и `RegisterController` продолжают вызывать родительский конструктор с 3 параметрами `parent::__construct($request, $view, $session)`.
-   * **Результат**: При открытии главной страницы постов или авторизации выбросится неперехватываемое исключение `ArgumentCountError` и запуск упадет.
-   * **Решение**: Передать `$dispatcher` в `parent::__construct` во всех дочерних контроллерах (как это сделано в `LogoutController`).
+   * **Исправлено в коммите c0dad41**: Скобка цикла `foreach` в `registerDirectory()` перенесена.
+3. **Фатальная ошибка `ArgumentCountError` в контроллерах** `[ИСПРАВЛЕНО]`:
+   * **Исправлено в коммите 34cd160**: В `PostsController`, `LoginController` и `RegisterController` в родительский конструктор `parent::__construct` передан аргумент `$dispatcher`. Запуск контроллеров работает корректно.
 
 ### Б. Архитектурные несоответствия (Service Locator вместо DI)
 1. **Контроллеры принимают конкретные зависимости** `[ИСПРАВЛЕНО]`:
-   * `LoginController`, `PostsController` и `RegisterController` теперь используют Constructor Injection: принимают `Request`, `View`, `Session`, `EventDispatcherInterface` и сервисы в конструкторах. Базовый `Controller` также рефакторирован.
+   * `LoginController`, `PostsController` и `RegisterController` используют Constructor Injection.
 2. **Перенос middleware на контейнер** `[ИСПРАВЛЕНО]`:
-   * В `MiddlewareDispatcher` посредники теперь разрешаются из контейнера через `$this->container->get($middlewareClass)`. Это позволило избавиться от оператора `new`.
+   * В `MiddlewareDispatcher` посредники разрешаются из контейнера.
 3. **Использование Service Locator в Middleware** `[ИСПРАВЛЕНО]`:
-   * **Исправлено в коммите c0dad41**: В `AuthMiddleware`, `GuestMiddleware` и `LoggerMiddleware` добавлен конструктор `__construct(private Session $session)`. Контейнер автоматически внедряет экземпляр `Session` при их создании.
+   * В `AuthMiddleware`, `GuestMiddleware` и `LoggerMiddleware` добавлен конструктор с `Session`.
 4. **Использование оператора `new` вместо разрешения через DI-контейнер** `[ИСПРАВЛЕНО]`:
-   * **Исправлено в коммите c0dad41**: 
-     * В `EventDispatcher` слушатели разрешаются через `$this->container->get($listenerClass)`.
-     * В `AbstractModel` свойство `QueryBuilder` внедряется через конструктор (`__construct(protected QueryBuilder $builder)`). Модели `Posts`, `Tags`, `Users` передают зависимость в родительский конструктор.
+   * В `EventDispatcher` и `AbstractModel` зависимости передаются через контейнер.
 
 ### В. Хардкод параметров и связей
-1. **Зашитые пути**: В `View.php` дефолтный путь шаблонов `/var/www/html/templates` прописан жестко в объявлении конструктора `__construct(private string $templatePath = '/var/www/html/templates')`.
+1. **Зашитые пути**: В `View.php` дефолтный путь шаблонов `/var/www/html/templates` прописан жестко в объявлении конструктора.
 2. **Динамические Middleware** `[ИСПРАВЛЕНО]`:
-   * Логика назначения Middleware перенесена из `Router.php` в контроллеры с помощью свойств и метода `getMiddlewareConfig()`. В роутере настроено динамическое чтение правил из контроллера и слияние с глобальным `LoggerMiddleware`.
+   * Перенесены в методы `getMiddlewareConfig()` контроллеров.
 
 ### Г. Новые замечания (по результатам последних коммитов)
 1. **Критическое несовпадение типов событий и слушателей в `EventDispatcher`** `[ИСПРАВЛЕНО]`:
-   * В `Application::registerEvents()` подписка слушателей `LogPostCreatedListener` и `LogUserRegisteredListener` переведена на `ModelSavedEvent::class`.
-2. **Использование Service Locator в методах моделей (`Users.php`, `Posts.php`, `Categories.php`)** `[ЗАМЕЧАНИЕ]`:
-   * В `Users::getFollowers()`, `Posts::getUser()`, `Posts::getCategory()`, `Categories::getPosts()` и `Posts::getPostsByUserId()` по-прежнему используется обращение к глобальному синглтону:
+   * В `Application::registerEvents()` подписка переведена на `ModelSavedEvent::class`.
+2. **Ошибки форматирования строк и типов в `TelegramService.php`** `[ИСПРАВЛЕНО]`:
+   * Исправлена интерполяция строки `mb_substr`, подстановка `approve_post:{$postId}`, тип `$callbackQueryId` изменен на `string`, конфигурация вынесена в `config/telegram.php`.
+3. **Двойная отправка события в `PostsController::store()`** `[ЗАМЕЧАНИЕ]`:
+   * На строках 62-65 вызов `dispatch` происходит дважды:
      ```php
-     $container = Application::getInstance()->getContainer();
-     $user = $container->get(Users::class);
+     $dispatcher = $app->getDispatcher();
+     $dispatcher->dispatch($event);
+     $this->dispatchEvent($event);
      ```
-   * **Решение**: Избавиться от Service Locator, передавая зависимости/фабрики или используя ключевое слово `new`.
-3. **Некорректная интерполяция строки в `TelegramService::sendPostForModeration()`** `[ОШИБКА]`:
-   * На строке 37 вызов `mb_substr` попал внутрь двойных кавычек строки (`"<b>Содержание:</b>\n . mb_substr..."`), из-за чего в Telegram отправляется код PHP.
-   * На строках 43 и 47 в `callback_data` написано `"approve_post:{post_id}"` вместо `"approve_post:{$postId}"`.
-   * **Решение**: Исправить склейку строк и подставить переменную `$postId`.
-4. **Отсутствие ключа `telegram` в `Config::$config`** `[ОШИБКА]`:
-   * `TelegramService` запрашивает `$this->config->get('telegram.token')`, но в `Config.php` этот ключ не объявлен. Метод возвращает `null`, и запросы отправляются на некорректный URL `https://api.telegram.org/bot`.
-   * **Решение**: Добавить настройки `telegram` в `Config::$config`.
-5. **Неверный тип аргумента в `TelegramService::answerCallbackQuery()`** `[ОШИБКА]`:
-   * Параметр `$callbackQueryId` объявлен как `array`, хотя Telegram передает `string`. Вызов приведет к `TypeError`.
-   * **Решение**: Изменить тип на `string $callbackQueryId`.
-6. **Несоответствие условия и текста ошибки в `RegisterUserDTO.php`** `[ЗАМЕЧАНИЕ]`:
-   * На строке 17 проверяется `if(strlen($this->password) < 6)`, а текст исключения утверждает `'пароль должен быть минимум 3 символа'`.
-7. **Использование `strlen` вместо `mb_strlen` для валидации кириллических строк в DTO** `[ЗАМЕЧАНИЕ]`:
-   * В `CreatePostDTO` (`strlen($this->title) < 3`) и `RegisterUserDTO` (`strlen($this->username) < 3`) однобайтовая функция `strlen` считает количество байтов, а не символов UTF-8.
+   * **Результат**: При публикации поста отправляются два одинаковых сообщения в Telegram.
+   * **Решение**: Удалить дублирующий вызов `$dispatcher->dispatch($event)`.
+4. **Использование Service Locator в методах моделей (`Users.php`, `Posts.php`, `Categories.php`)** `[ЗАМЕЧАНИЕ]`:
+   * В `Users::getFollowers()`, `Posts::getUser()`, `Categories::getPosts()` используется обращение к глобальному синглтону `Application::getInstance()->getContainer()`.
+5. **Несоответствие условия и текста ошибки в `RegisterUserDTO.php`** `[ЗАМЕЧАНИЕ]`:
+   * На строке 17 проверяется `if(strlen($this->password) < 6)`, а текст исключения говорит `'пароль должен быть минимум 3 символа'`.
 
 ---
 
@@ -133,10 +123,10 @@
      * Создано событие `PostPendingModerationEvent`.
      * Создан слушатель `SendTelegramModerationRequest` и зарегистрирован в `Application.php`.
      * Добавлен `TelegramService.php` для взаимодействия с Telegram API.
-  3. `[ ]` **Консольный скрипт модерации (`bin/telegram-poll.php`)**:
+  3. `[x]` **Консольный скрипт модерации (`bin/telegram-poll.php`)**:
      * Скрипт инициализирует DI-контейнер и запускает бесконечный цикл `while (true)`.
      * Делает запросы к API Telegram `getUpdates` с параметром `offset`.
-     * При получении нажатия кнопки меняет статус в БД и обновляет сообщение в Telegram.
+     * При получении нажатия кнопки меняет статус поста в БД (`approve` / `reject`) и обновляет сообщение в Telegram.
 
 ### День 7: Роли, Панель модерации, Рекурсивный рендеринг и UI
 * **Шаги**:
@@ -150,13 +140,10 @@
 ## 4. План проверки и верификации (Verification Plan)
 
 ### Автоматические проверки (через CLI-скрипты в Docker)
-* Запуск скриптов проверки контейнера и подписок событий.
+* Запуск демона `docker compose exec app php bin/telegram-poll.php`.
 
 ### Ручное тестирование сценариев
-1. **Исправление `parent::__construct`**: Передать `$dispatcher` во все контроллеры, проверить открытие `/posts`, `/login`, `/register`.
-2. **Проверка отправки поста в Telegram**:
-   * Создать новый пост на сайте.
-   * Убедиться, что в Telegram приходит сообщение с кнопками "Одобрить" и "Отклонить".
-3. **Проверка работы демона Telegram (CLI Long Polling)**:
-   * Запустить скрипт `docker compose exec app php bin/telegram-poll.php`.
-   * Нажать кнопку в Telegram и убедиться, что статус в БД обновился.
+1. **Проверка Long Polling демона**:
+   * Запустить `docker compose exec app php bin/telegram-poll.php`.
+   * Создать новый пост на сайте -> в Telegram приходит уведомление с Inline-кнопками.
+   * Нажать "✅ Одобрить" в Telegram -> демон считывает нажатие, вызывает `$postService->approvedPost($postId)`, обновляет текст в Telegram ("Пост #ID одобрен!") и пост становится видимым на сайте.
