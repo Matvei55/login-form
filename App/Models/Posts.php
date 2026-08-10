@@ -26,11 +26,13 @@ class Posts extends AbstractModel implements Model
     public function load(?int $id = null): self
     {
         if ($id !== null) {
-            $result = $this->builder
+            error_log("загружаем пост #$id");
+            $builder = new QueryBuilder();
+            $result = $builder
                 ->table($this->table)
                 ->where('id', $id)
                 ->fetchOne();
-
+            error_log('пост::лоад ' . json_encode($result));
             $this->data = $result ?: [];
 
             if ($this->data) {

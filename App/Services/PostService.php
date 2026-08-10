@@ -65,20 +65,32 @@ class PostService
     }
     public function approvedPost(int $postId): bool
     {
+        error_log("[PostService] Ищем пост #$postId");
         $post = $this->postModel->load($postId);
+        error_log("[PostService] Данные поста: " . json_encode($post->getData()));
         if(!$post->getData()){
+            error_log("[PostService] Пост #$postId не найден в БД");
             throw new \InvalidArgumentException('пост не найден');
         }
         $post->approve();
-        return (bool) $post->save();
+        $result= $post->save();
+        error_log("[PostService] Пост #$postId одобрен, результат сохранения: " . ($result ? 'true' : 'false'));
+        return (bool) $result;
     }
     public function rejectPost(int $postId): bool
     {
+        error_log("[PostService] Ищем пост #$postId для отклонения");
         $post = $this->postModel->load($postId);
+        error_log("[PostService] Данные поста: " . json_encode($post->getData()));
+
         if(!$post->getData()){
-            throw new \InvalidArgumentException('пост не найден');
+            error_log("[PostService] Пост #$postId не найден в БД");
+            throw new \InvalidArgumentException("пост #$postId не найден");
         }
+
         $post->reject();
-        return (bool) $post->save();
+        $result = $post->save();
+        error_log("[PostService] Пост #$postId отклонен, результат сохранения: " . ($result ? 'true' : 'false'));
+        return (bool) $result;
     }
 }

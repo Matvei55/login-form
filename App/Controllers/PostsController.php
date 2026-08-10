@@ -63,7 +63,7 @@ class PostsController extends Controller
                   $dispatcher = $app->getDispatcher();
                   $dispatcher->dispatch($event);
                 $this->dispatchEvent($event);
-                $this->setSuccess('пост успешно создан');
+                $this->setSuccess('пост отправлен на модерацию');
             }else {
                 $this->setError('не удалось создать пост');
             }

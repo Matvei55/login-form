@@ -28,29 +28,6 @@ class TelegramService
         }
         return $this->httpClient->post($this->apiUrl . '/sendMessage', $data);//отправляем запрос к тг апи и получаем ответ
     }
-//    public function sendPostForModeration(int $postId, string $title, string $content,string $author): array //отправить пост на модерацию
-//    {
-//        $text = "<b>новый пост на модерацию</b>\n\n";
-//        $text .= "<b>ID:</b> {$postId}\n";
-//        $text .= "<b>Автор:</b> {$author}\n";
-//        $text .="<b>Заголовок:</b> {$title}\n\n";
-//        $text .= "<b>Содержание:</b>\n . mb_substr($content, 0, 250) . (mb_strlen($content) > 200 ? '...' : '');";
-//        $keyboard = [
-//            'inline_keyboard' => [ //клавиатура с двумя кнопками
-//                [
-//                    [
-//                        'text' => 'Одобрить',
-//                        'callback_data' => "approve_post:{post_id}",
-//                    ],
-//                    [
-//                        'text' => 'Отклонить',
-//                        'callback_data' => "reject_post:{post_id}",
-//                    ]
-//                ]
-//            ]
-//        ];
-//        return $this->sendMessage($text, $keyboard);
-//    }
     public function sendPostForModeration(int $postId, string $title, string $content, string $author): array
     {
     $text = "<b>📝 Новый пост на модерацию</b>\n\n";
@@ -89,7 +66,7 @@ class TelegramService
         ];
         return $this->httpClient->post($this->apiUrl . '/editMessageText', $data);
     }
-    public function answerCallbackQuery(array $callbackQueryId, string $text = ''): array //отвечает за нажатие кнопки
+    public function answerCallbackQuery(string $callbackQueryId, string $text = ''): array //отвечает за нажатие кнопки
     {
         $data = [
             'callback_query_id' => $callbackQueryId,
@@ -102,7 +79,7 @@ class TelegramService
         $data = [
             'offset' => $offset, //айд последнего обработанного события +1
             'timeout' => $timeout,//сколько секунд ждать новых событий
-            'allowed_updates' => ['callback_query'],//получать только нажатия кнопок
+//            'allowed_updates' => ['callback_query'],//получать только нажатия кнопок
         ];
         return $this->httpClient->post($this->apiUrl . '/getUpdates', $data);
     }

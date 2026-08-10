@@ -30,7 +30,9 @@ class QueryBuilder
         [$sql, $params] = $this->getSelectSQL();
         $stmt = $this->pdo->prepare($sql);
         $stmt->execute($params);
-        return $stmt->fetch(PDO::FETCH_ASSOC) ?: null;
+        $result=  $stmt->fetch(PDO::FETCH_ASSOC) ?: null;
+        $this->clear();
+        return $result;
     }
 
     public function fetchAll(): ?array
@@ -38,7 +40,9 @@ class QueryBuilder
         [$sql, $params] = $this->getSelectSQL();
         $stmt = $this->pdo->prepare($sql);
         $stmt->execute($params);
-        return $stmt->fetchAll(PDO::FETCH_ASSOC);
+        $result= $stmt->fetchAll(PDO::FETCH_ASSOC);
+        $this->clear();
+        return $result;
     }
 
     public function insert(array $data): int|bool
@@ -125,7 +129,6 @@ class QueryBuilder
     {
         $sql = $this->buildSelect();
         $params = $this->params;
-        $this->clear();
 
         return [$sql, $params];
     }

@@ -6,8 +6,9 @@ use App\Core\Application;
 use App\Services\TelegramService;
 use App\Services\PostService;
 
-echo "Telegram Long Polling";
-echo "нажми Ctrl+C чтоб остановить";
+echo "Telegram Long Polling\n";
+echo "нажми Ctrl+C чтоб остановить\n";
+
 try {
     $app = Application::getInstance();
     $container = $app->getContainer();
@@ -23,31 +24,49 @@ try {
             $updates = $telegram->getUpdates($offset);
             foreach ($updates['result'] ?? [] as $update) {
                 $updateId = $update['update_id'];
+
                 if(isset($update['callback_query'])) {
                     $callback = $update['callback_query'];
                     $data = $callback['data'];
                     $messageId = $callback['message']['message_id'];
                     $callbackId = $callback['id'];
+
+                    error_log(" [Telegram] Получен callback: " . $data);
+                    error_log(" [Telegram] Полный callback: " . json_encode($callback));
+
                     if (preg_match('/^(approve|reject)_post:(\d+)$/', $data, $matches)) {
                         $action = $matches[1];
                         $postId = (int)$matches[2];
+                        error_log(" [Telegram] action: $action, postId: $postId");
+
                         try{
                             if($action === 'approve') {
                                 $postService->approvedPost($postId);
-                                $telegram->editMessageText($messageId, "Пост #{$postId} одобрен!!!!!!!");
+                                $telegram->editMessageText($messageId, " Пост #{$postId} одобрен!");
                             }else{
                                 $postService->rejectPost($postId);
-                                $telegram->editMessageText($messageId, "Пост #{$postId} отклоне");
+                                $telegram->editMessageText($messageId, " Пост #{$postId} отклонен");
                             }
-                            $telegram->answerCallbackQuery($callbackId, "Готово!");
-                            echo date("Y-m-d H:i:s") . "Пост #{$postId}" . ($action === 'approved' ? 'одобрен' : 'отклонен') . "\n";
+
+                            try {
+                                $telegram->answerCallbackQuery($callbackId, "Готово!");
+                            } catch (\Exception $e) {
+                                if (strpos($e->getMessage(), 'query is too old') !== false) {
+                                    error_log("[Telegram] Callback устарел (нажато слишком поздно), но пост обработан");
+                                } else {
+                                    throw $e;
+                                }
+                            }
+
+                            echo date("Y-m-d H:i:s") . " Пост #{$postId} " . ($action === 'approve' ? 'одобрен' : 'отклонен') . "\n";
+
                         }catch (\Exception $e){
-                            $telegram->answerCallbackQuery($callbackId, "ошибка:" . $e->getMessage());
+                            error_log("[Telegram] Ошибка: " . $e->getMessage());
                             echo "Error:" . $e->getMessage() . "\n";
                         }
                     }
                 }
-                $offset = $updateId+1;
+                $offset = $updateId + 1;
             }
         }catch (\Exception $e){
             echo "Error:" . $e->getMessage() . "\n";
