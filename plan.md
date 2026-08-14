@@ -2,7 +2,7 @@
 
 Этот документ объединяет результаты аудита кодовой базы, архитектурный анализ пробелов фреймворка и детальный пошаговый план разработки на 5-7 дней. 
 
-*Статус на 10 августа 2026 года: проведен аудит коммитов за 10.08 (`34cd160`, `29a08d4`). Студент полностью исправил критические баги вызова конструкторов контроллеров, ошибки конкатенации в TelegramService и создал работающий консольный демон Long Polling (`bin/telegram-poll.php`). День 6 выполнен полностью.*
+*Статус на 14 августа 2026 года: проведен аудит коммита от 13.08 (`a00d1ff`). Студент реализовал RoleMiddleware с проверкой иерархии прав доступа (admin, moderator, user), добавил метод Session::getUser(), создал заготовку RoleService и метод выборки комментариев. Начато выполнение Дня 7.*
 
 ---
 
@@ -13,16 +13,16 @@
 ### А. Критические ошибки (сломают запуск или логику автозагрузки)
 1. **Отсутствие зависимости `phpdotenv` и файла `.env`** `[Частично обойдено]`:
    * **Что сделано**: Студент добавил загрузку Dotenv в `bin/telegram-poll.php` и проверку в `Config::load()`.
-   * **Проблема**: В `composer.json` по-прежнему нет явной зависимости `vlucas/phpdotenv`.
+   * **Проблема**: В `composer.json` по-прежнему нет зависимости `vlucas/phpdotenv`.
    * **Решение**: Выполнить `composer require vlucas/phpdotenv`.
 2. **Баг авторегистрации в контейнере (`App/Container/Container.php`)** `[ИСПРАВЛЕНО]`:
    * **Исправлено в коммите c0dad41**: Скобка цикла `foreach` в `registerDirectory()` перенесена.
 3. **Фатальная ошибка `ArgumentCountError` в контроллерах** `[ИСПРАВЛЕНО]`:
-   * **Исправлено в коммите 34cd160**: В `PostsController`, `LoginController` и `RegisterController` в родительский конструктор `parent::__construct` передан аргумент `$dispatcher`. Запуск контроллеров работает корректно.
+   * **Исправлено в коммите 34cd160**: В `PostsController`, `LoginController` и `RegisterController` в родительский конструктор `parent::__construct` передан аргумент `$dispatcher`.
 
 ### Б. Архитектурные несоответствия (Service Locator вместо DI)
 1. **Контроллеры принимают конкретные зависимости** `[ИСПРАВЛЕНО]`:
-   * `LoginController`, `PostsController` и `RegisterController` используют Constructor Injection.
+   * Контроллеры используют Constructor Injection.
 2. **Перенос middleware на контейнер** `[ИСПРАВЛЕНО]`:
    * В `MiddlewareDispatcher` посредники разрешаются из контейнера.
 3. **Использование Service Locator в Middleware** `[ИСПРАВЛЕНО]`:
@@ -36,22 +36,19 @@
    * Перенесены в методы `getMiddlewareConfig()` контроллеров.
 
 ### Г. Новые замечания (по результатам последних коммитов)
-1. **Критическое несовпадение типов событий и слушателей в `EventDispatcher`** `[ИСПРАВЛЕНО]`:
-   * В `Application::registerEvents()` подписка переведена на `ModelSavedEvent::class`.
-2. **Ошибки форматирования строк и типов в `TelegramService.php`** `[ИСПРАВЛЕНО]`:
-   * Исправлена интерполяция строки `mb_substr`, подстановка `approve_post:{$postId}`, тип `$callbackQueryId` изменен на `string`, конфигурация вынесена в `config/telegram.php`.
-3. **Двойная отправка события в `PostsController::store()`** `[ЗАМЕЧАНИЕ]`:
-   * На строках 62-65 вызов `dispatch` происходит дважды:
+1. **Использование Service Locator в `Session::getUser()`** `[ЗАМЕЧАНИЕ]`:
+   * В `Session::getUser()` модель пользователя запрашивается напрямую через синглтон контейнера:
      ```php
-     $dispatcher = $app->getDispatcher();
-     $dispatcher->dispatch($event);
-     $this->dispatchEvent($event);
+     $container = Application::getInstance()->getContainer();
+     $userModel = $container->get(Users::class);
      ```
-   * **Результат**: При публикации поста отправляются два одинаковых сообщения в Telegram.
+   * **Решение**: Избавиться от Service Locator, передавая зависимости через конструктор или маппер.
+2. **Пустой класс `RoleService.php`** `[В ПРОЦЕССЕ]`:
+   * Создан пустой класс `RoleService`, логику проверки и смены ролей стоит вынести в него из контроллеров и моделей.
+3. **Двойная отправка события в `PostsController::store()`** `[ЗАМЕЧАНИЕ]`:
+   * На строках 62-65 вызов `dispatch` происходит дважды.
    * **Решение**: Удалить дублирующий вызов `$dispatcher->dispatch($event)`.
-4. **Использование Service Locator в методах моделей (`Users.php`, `Posts.php`, `Categories.php`)** `[ЗАМЕЧАНИЕ]`:
-   * В `Users::getFollowers()`, `Posts::getUser()`, `Categories::getPosts()` используется обращение к глобальному синглтону `Application::getInstance()->getContainer()`.
-5. **Несоответствие условия и текста ошибки в `RegisterUserDTO.php`** `[ЗАМЕЧАНИЕ]`:
+4. **Несоответствие условия и текста ошибки в `RegisterUserDTO.php`** `[ЗАМЕЧАНИЕ]`:
    * На строке 17 проверяется `if(strlen($this->password) < 6)`, а текст исключения говорит `'пароль должен быть минимум 3 символа'`.
 
 ---
@@ -119,31 +116,24 @@
 ### День 6: Внешние API и CLI Long Polling (Двусторонняя Telegram-модерация)
 * **Шаги**:
   1. `[x]` **HTTP-клиент**: Создан класс `App/Core/HttpClient.php` на cURL.
-  2. `[x]` **Слушатель отправки на модерацию**:
-     * Создано событие `PostPendingModerationEvent`.
-     * Создан слушатель `SendTelegramModerationRequest` и зарегистрирован в `Application.php`.
-     * Добавлен `TelegramService.php` для взаимодействия с Telegram API.
-  3. `[x]` **Консольный скрипт модерации (`bin/telegram-poll.php`)**:
-     * Скрипт инициализирует DI-контейнер и запускает бесконечный цикл `while (true)`.
-     * Делает запросы к API Telegram `getUpdates` с параметром `offset`.
-     * При получении нажатия кнопки меняет статус поста в БД (`approve` / `reject`) и обновляет сообщение в Telegram.
+  2. `[x]` **Слушатель отправки на модерацию**: Событие `PostPendingModerationEvent` и слушатель `SendTelegramModerationRequest`.
+  3. `[x]` **Консольный скрипт модерации (`bin/telegram-poll.php`)**: Реализован Long Polling демон.
 
 ### День 7: Роли, Панель модерации, Рекурсивный рендеринг и UI
 * **Шаги**:
-  1. `[ ]` **RoleMiddleware**: Проверка прав `admin`/`moderator`.
-  2. `[ ]` **AdminController**: Контроллер модерации комментариев.
-  3. `[ ]` **Рекурсивное отображение комментариев**: Рендеринг дерева комментариев в шаблонах.
-  4. `[ ]` **UI/CSS**: Стили для веток комментариев.
+  1. `[x]` **RoleMiddleware**: Написан посредник `App/Middleware/RoleMiddleware.php` с иерархией ролей (`admin`, `moderator`, `user`).
+  2. `[/]` **RoleService & AdminController**: *Создана заготовка `RoleService.php`*. Создать контроллер модерации (одобрение/удаление комментариев) и защитить его через `RoleMiddleware`.
+  3. `[ ]` **Рекурсивное отображение комментариев**: Написать рекурсивный вывод комментариев в шаблонах.
+  4. `[ ]` **UI/CSS**: Настроить стили для веток комментариев.
 
 ---
 
 ## 4. План проверки и верификации (Verification Plan)
 
 ### Автоматические проверки (через CLI-скрипты в Docker)
-* Запуск демона `docker compose exec app php bin/telegram-poll.php`.
+* Проверка работы `RoleMiddleware` при обращении с разными ролями пользователей.
 
 ### Ручное тестирование сценариев
-1. **Проверка Long Polling демона**:
-   * Запустить `docker compose exec app php bin/telegram-poll.php`.
-   * Создать новый пост на сайте -> в Telegram приходит уведомление с Inline-кнопками.
-   * Нажать "✅ Одобрить" в Telegram -> демон считывает нажатие, вызывает `$postService->approvedPost($postId)`, обновляет текст в Telegram ("Пост #ID одобрен!") и пост становится видимым на сайте.
+1. **Проверка RoleMiddleware**:
+   * Вход под пользователем с ролью `user` -> попытка зайти на роут с требованием `admin`/`moderator` приводит к редиректу на `/posts`.
+   * Вход под `admin` -> доступ ко всем роутам открыт.
