@@ -1,6 +1,7 @@
 <?php
 namespace App\Services;
 
+use App\Core\QueryBuilder;
 use App\DTO\CreatePostDTO;
 use App\Models\Posts;
 use App\Models\Comments;
@@ -11,7 +12,9 @@ class CommentService
     public function __construct(
         private Comments $commentModel,
         private Posts $postModel,
-        private Users $userModel
+        private Users $userModel,
+        private QueryBuilder $builder
+
     ){}
 
     public function addComment(int $postId, int $userId, string $content, ?int $parentId = null): ?int
@@ -35,7 +38,7 @@ class CommentService
 
     public function getCommentTree(int $postId): array
     {
-        $comments = $this->commentModel->builder
+        $comments = $this->builder
             ->table('comments')
             ->where('post_id', $postId)
             ->orderBy('created_at', 'ASC')

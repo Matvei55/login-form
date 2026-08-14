@@ -94,4 +94,12 @@ class Comments extends AbstractModel implements Model
         $this->data['status'] = 'spam';
         return $this;
     }
+    public function getCommentsByPostId(int $postId):array
+    {
+        return $this->builder
+            ->table($this->table)
+            ->where('post_id', $postId)
+            ->orderBy('created_at', 'ASC')
+            ->fetchAll();
+    }
 }

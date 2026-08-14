@@ -1,5 +1,6 @@
 <?php
 namespace App\Core;
+use App\Models\Users;
 
 class Session
 {
@@ -56,5 +57,17 @@ class Session
         $value = $_SESSION['_flash'][$key] ?? $default;
         unset($_SESSION['_flash'][$key]);
         return $value;
+    }
+    public function getUser(): ?Users
+    {
+        $userId = $this->getUserId();
+        if (!$userId) {
+            return null;
+        }
+
+        $container = Application::getInstance()->getContainer();
+        $userModel = $container->get(Users::class);
+        $user = $userModel->load($userId);
+        return $user->getData() ? $user : null;
     }
 }
