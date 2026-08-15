@@ -66,4 +66,47 @@ class CommentService
         }
         return $tree;
     }
+    public function getPendingComments(): array
+    {
+        return $this->commentModel->getPendingComments();
+    }
+    public function getApprovedComments(): array
+    {
+        return $this->commentModel->getApprovedComments();
+    }
+    public function getRejectedComments(): array
+    {
+        return $this->commentModel->getRejectedComments();
+    }
+
+    public function getDeletedComments(int $commentId): array
+    {
+        return $this->commentModel->getDeleteComments();
+    }
+    public function approveComment(int $commentId): bool
+    {
+        $comment = $this->commentModel->load($commentId);
+        if(!$comment->getData()){
+            throw new \Exception('комментарий не найден');
+        }
+        $comment->approve();
+        return (bool) $comment->save();
+    }
+    public function rejectComment(int $commentId): bool
+    {
+        $comment = $this->commentModel->load($commentId);
+        if(!$comment->getData()){
+            throw new \Exception('комментарий не найден');
+        }
+        $comment->reject();
+        return (bool) $comment->save();
+    }
+    public function deleteComment(int $commentId): bool
+    {
+        $comment = $this->commentModel->load($commentId);
+        if(!$comment->getData()){
+            throw new \Exception('комментарий не найден');
+        }
+        return $comment->delete();
+    }
 }

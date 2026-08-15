@@ -102,4 +102,64 @@ class Comments extends AbstractModel implements Model
             ->orderBy('created_at', 'ASC')
             ->fetchAll();
     }
+    public function getPendingComments(): array
+    {
+        return $this->builder
+            ->table($this->table)
+            ->where('status', 'pending')
+            ->orderBy('created_at', 'ASC')
+            ->fetchAll();
+    }
+    public function getApprovedComments(): array
+    {
+        return $this->builder
+            ->table($this->table)
+            ->where('status', 'approved')
+            ->orderBy('created_at', 'DESC')
+            ->fetchAll();
+    }
+    public function getRejectedComments(): array
+    {
+        return $this->builder
+            ->table($this->table)
+            ->where('status', 'rejected')
+            ->orderBy('created_at', 'DESC')
+            ->fetchAll();
+    }
+
+    public function getCommentTree(int $postId):array
+    {
+        $comments = $this->builder
+            ->table($this->table)
+            ->where('post_id', $postId)
+            ->where('status',  'approved')
+            ->orderBy('created_at', 'ASC')
+            ->fetchAll();
+        $grouped = [];
+        foreach ($comments as $comment){
+            $parentId = $comment['parent_id'] ?? 0;
+            $grouped[$parentId][] = $comment;
+        }
+        return $this->buildTree($grouped, 0);
+    }
+    public function buildTree(array $grouped, int $parentId):array
+    {
+        $tree = [];
+        if(!isset($grouped[$parentId])){
+            return $tree;
+        }
+        foreach ($grouped[$parentId] as $comment){
+            $comment['children'] = $this->buildTree($grouped, $comment['id']);
+            $tree[] = $comment;
+        }
+        return $tree;
+    }
+    public function getDeleteComments():array
+    {
+        return $this->builder
+            ->table($this->table)
+            ->where('status',  'deleted')
+            ->orderBy('created_at', 'DESC')
+            ->fetchAll();
+    }
 }
