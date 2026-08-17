@@ -42,6 +42,34 @@ class AdminController extends Controller
     }
     public function approveComment(Request $request): void
     {
-        //начинать отсюда
+        $this->roleService->requireModerator();
+        $commentId = (int) $request->postParam('comment_id', 0);
+        if($commentId > 0){
+            try{
+                $this->commentService->approveComment($commentId);
+                $this->setSuccess('комментарий одобрен');
+            }catch (\Exception $e){
+                $this->setError($e->getMessage());
+            }
+        }else{
+            $this->setError('неверный ID комментария');
+        }
+        $this->redirect('/admin/comments');
+    }
+    public function rejectComment(Request $request): void
+    {
+        $this->roleService->requireModerator();
+        $commentId = (int) $request->postParam('comment_id', 0);
+        if($commentId > 0){
+            try{
+                $this->commentService->rejectComment($commentId);
+                $this->setSuccess('комментарий отклонён');
+            }catch (\Exception $e){
+                $this->setError($e->getMessage());
+            }
+        }else{
+            $this->setError('неверный ID комментария');
+        }
+        $this->redirect('/admin/comments');
     }
 }
