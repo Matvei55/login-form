@@ -58,11 +58,20 @@ abstract class AbstractModel
     {
         $this->dispatcher->dispatch(new ModelSavingEvent($this));
         $this->saveBefore();
+
+        $dataToSave = $this->data;
+        unset($dataToSave['id']);
+
         if($this->id !== null) {
-            $result = $this->builder
+            $affectedRows = $this->builder
                 ->table($this->getTable())
                 ->where('id', $this->id)
-                ->update($this->data);
+                ->update($dataToSave);
+            if($affectedRows > 0) {
+                $result = true;
+            }else{
+                $result = false;
+            }
         }else{
             $newId = $this->builder
                 ->table($this->getTable())

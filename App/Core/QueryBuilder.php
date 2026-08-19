@@ -57,7 +57,12 @@ class QueryBuilder
     {
         [$sql, $params] = $this->getUpdateSQL($data);
         $stmt = $this->pdo->prepare($sql);
-        return $stmt->execute($params);
+        $result = $stmt->execute($params);
+        if($result){
+            $affectedRows = $stmt->rowCount();
+            return $affectedRows ;
+        }
+        return false;
     }
 
     public function delete(): bool

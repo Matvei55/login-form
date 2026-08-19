@@ -132,9 +132,10 @@ class Posts extends AbstractModel implements Model
     }
 
     //функция должна возращать массив с моделями экзеипляра класса пост
-    public function getPostsByUserId(Users $user ,?string $status): array
+    public function getPostsByUserId(Users $user ,?string $status = null): array
     {
-        $query = $this->builder
+        $builder = new QueryBuilder();
+        $query = $builder
             ->table($this->table)
             ->where('user_id', $user->getId());
         if($status !== null) {
@@ -349,6 +350,21 @@ class Posts extends AbstractModel implements Model
     public function isRejected(): bool
     {
         return( $this->data['status'] ?? 'pending') === 'rejected';
+    }
+    public function getStatus(): string
+    {
+        return $this->data['status'] ?? 'pending';
+    }
+    public function updateStatus(int $postId,string $status): bool
+    {
+        $builder = new QueryBuilder();
+
+        $result = $builder
+            ->table($this->table)
+            ->where('id', $postId)
+            ->update(['status' => $status]);
+        error_log("🔍 [updateStatus] Пост #$postId, статус: $status, результат: " . ($result ? 'true' : 'false'));
+        return (bool)$result;
     }
 }
 

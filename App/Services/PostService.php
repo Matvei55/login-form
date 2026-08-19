@@ -1,6 +1,7 @@
 <?php
 namespace App\Services;
 
+use App\Core\QueryBuilder;
 use App\Models\Posts;
 use App\Models\Tags;
 use App\Models\Users;
@@ -13,12 +14,14 @@ class PostService
 {
     public function __construct
     (
-    private Posts $postModel,
-    private Tags $tagModel,
-    private Users $userModel,
-    private Categories $categoryModel,
-    private EventDispatcherInterface $dispatcher
-    ){}
+        private Posts                    $postModel,
+        private Tags                  $tagModel,
+        private Users                    $userModel,
+        private Categories               $categoryModel,
+        private EventDispatcherInterface $dispatcher,
+    )
+    {
+    }
 
     public function create(CreatePostDTO $dto, int $userId): ?int
     {
@@ -31,22 +34,22 @@ class PostService
                 'title' => $dto->title,
                 'content' => $dto->content,
             ]);
-        if($dto->categoryId){
+        if ($dto->categoryId) {
             $category = $this->categoryModel->load($dto->categoryId);
-            if($category->getData()){
+            if ($category->getData()) {
                 $post->setCategory($category);
             }
         }
         $postId = $post->save();
-        if($postId && !empty($dto->tags)){
-            foreach ($dto->tags as $tagName){
+        if ($postId && !empty($dto->tags)) {
+            foreach ($dto->tags as $tagName) {
                 $tag = $this->tagModel->findOrCreate($tagName);
                 $this->postModel->attachTag($tag);
             }
         }
-        if($postId){
+        if ($postId) {
             $savedPost = $this->postModel->load($postId);
-            if($savedPost->getData()){
+            if ($savedPost->getData()) {
                 $this->dispatcher->dispatch(new PostPendingModerationEvent($savedPost, $user));
             }
         }
@@ -58,6 +61,7 @@ class PostService
         $user = $this->userModel->load($userId);
         return $this->postModel->getPostsByUserId($user, $status);
     }
+
     public function getPost(int $postId): ?Posts
     {
         $post = $this->postModel->load($postId);
@@ -65,32 +69,26 @@ class PostService
     }
     public function approvedPost(int $postId): bool
     {
-        error_log("[PostService] Ищем пост #$postId");
-        $post = $this->postModel->load($postId);
-        error_log("[PostService] Данные поста: " . json_encode($post->getData()));
-        if(!$post->getData()){
-            error_log("[PostService] Пост #$postId не найден в БД");
-            throw new \InvalidArgumentException('пост не найден');
-        }
-        $post->approve();
-        $result= $post->save();
-        error_log("[PostService] Пост #$postId одобрен, результат сохранения: " . ($result ? 'true' : 'false'));
-        return (bool) $result;
+    error_log("🔍 [approvedPost] Начинаем одобрение поста #$postId");
+
+    $result = $this->postModel->updateStatus($postId, 'approved');
+
+    if ($result) {
+        error_log("✅ [approvedPost] Пост #$postId одобрен");
+    } else {
+        error_log("❌ [approvedPost] Пост #$postId НЕ одобрен");
+    }
+
+    return $result;
     }
     public function rejectPost(int $postId): bool
     {
-        error_log("[PostService] Ищем пост #$postId для отклонения");
-        $post = $this->postModel->load($postId);
-        error_log("[PostService] Данные поста: " . json_encode($post->getData()));
-
-        if(!$post->getData()){
-            error_log("[PostService] Пост #$postId не найден в БД");
-            throw new \InvalidArgumentException("пост #$postId не найден");
+        $result = $this->postModel->updateStatus($postId, 'rejected');
+        if ($result) {
+            error_log("[PostService] rejected #$postId");
         }
+        return $result;
 
-        $post->reject();
-        $result = $post->save();
-        error_log("[PostService] Пост #$postId отклонен, результат сохранения: " . ($result ? 'true' : 'false'));
-        return (bool) $result;
+
     }
 }

@@ -7,8 +7,8 @@ class RoleMiddleware implements MiddlewareInterface
     private string $requireRole;
     public function __construct
     (
+        private Session $session,
         string $requireRole = 'user',
-        private Session $session
     ){
         $this->requireRole = $requireRole;
     }
