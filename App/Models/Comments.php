@@ -106,24 +106,32 @@ class Comments extends AbstractModel implements Model
     {
         return $this->builder
             ->table($this->table)
-            ->where('status', 'pending')
-            ->orderBy('created_at', 'ASC')
+            ->select(['comments.*', 'users.name as author_name'])
+            ->leftJoin('users', 'comments.user_id', '=', 'users.id')
+            ->where('comments.status', 'pending')
+            ->orderBy('comments.created_at', 'ASC')
             ->fetchAll();
     }
+
     public function getApprovedComments(): array
     {
         return $this->builder
             ->table($this->table)
-            ->where('status', 'approved')
-            ->orderBy('created_at', 'DESC')
+            ->select(['comments.*', 'users.name as author_name'])
+            ->leftJoin('users', 'comments.user_id', '=', 'users.id')
+            ->where('comments.status', 'approved')
+            ->orderBy('comments.created_at', 'DESC')
             ->fetchAll();
     }
+
     public function getRejectedComments(): array
     {
         return $this->builder
             ->table($this->table)
-            ->where('status', 'rejected')
-            ->orderBy('created_at', 'DESC')
+            ->select(['comments.*', 'users.name as author_name'])
+            ->leftJoin('users', 'comments.user_id', '=', 'users.id')
+            ->where('comments.status', 'rejected')
+            ->orderBy('comments.created_at', 'DESC')
             ->fetchAll();
     }
 
@@ -131,6 +139,8 @@ class Comments extends AbstractModel implements Model
     {
         $comments = $this->builder
             ->table($this->table)
+            ->select(['comments.*', 'users.name as author_name'])
+            ->join('users', 'comments.users.id', '=', 'users.id')
             ->where('post_id', $postId)
             ->where('status',  'approved')
             ->orderBy('created_at', 'ASC')

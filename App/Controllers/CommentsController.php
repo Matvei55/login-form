@@ -8,7 +8,7 @@ use App\Core\Session;
 use App\Core\View;
 use App\Core\EventDispatcherInterface;
 use App\Services\CommentService;
-class CommentController extends Controller
+class CommentsController extends Controller
 {
     public function __construct(
         Request $request,

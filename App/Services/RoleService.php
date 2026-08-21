@@ -6,7 +6,7 @@ use App\Models\Users;
 
 class RoleService
 {
-    private function __construct(
+    public function __construct(
         public Session $session,
     ){}
     public function isAuthenticated(): bool

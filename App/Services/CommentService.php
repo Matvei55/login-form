@@ -38,18 +38,21 @@ class CommentService
 
     public function getCommentTree(int $postId): array
     {
-        $comments = $this->builder
-            ->table('comments')
-            ->where('post_id', $postId)
-            ->orderBy('created_at', 'ASC')
-            ->fetchAll();
+    $comments = $this->builder
+        ->table('comments')
+        ->select(['comments.*', 'users.name as author_name'])
+        ->leftJoin('users', 'comments.user_id', '=', 'users.id')
+        ->where('comments.post_id', $postId)
+        ->where('comments.status', 'approved')
+        ->orderBy('comments.created_at', 'ASC')
+        ->fetchAll();
 
-        $grouped = [];
-        foreach($comments as $comment){
-            $parentId = $comment['parent_id'] ?? 0;
-            $grouped[$parentId][] = $comment;
-        }
-        return $this->buildTree($grouped, 0);
+    $grouped = [];
+    foreach ($comments as $comment) {
+        $parentId = $comment['parent_id'] ?? 0;
+        $grouped[$parentId][] = $comment;
+    }
+    return $this->buildTree($grouped, 0);
     }
 
     private function buildTree(array $grouped, int $parentId): array

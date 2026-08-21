@@ -19,15 +19,22 @@ class Router
         $url = strtok($url, '?');
         $parts = explode('/', trim($url, '/'));
 
-        if (isset($parts[0]) && $parts[0] === 'logout') {
-            $controllerName = 'LogoutController';
-            $action = 'index';
-            $params = [];
-        } elseif (empty($parts[0]) || $parts[0] === '') {
+        if (empty($parts[0]) || $parts[0] === '') {
             $controllerName = 'LoginController';
             $action = 'index';
             $params = [];
-        } else {
+        }
+        elseif ($parts[0] === 'admin') {
+            $controllerName = 'AdminController';
+            $action = $parts[1] ?? 'index';
+            $params = array_slice($parts, 2);
+        }
+        elseif ($parts[0] === 'logout') {
+            $controllerName = 'LogoutController';
+            $action = 'index';
+            $params = [];
+        }
+        else {
             $controllerName = ucfirst($parts[0]) . 'Controller';
             $action = $parts[1] ?? 'index';
             $params = array_slice($parts, 2);
@@ -54,39 +61,37 @@ class Router
             return $controller->$action($request, ...$params);
         });
     }
-private function getMiddlewareForRoute(Controller $controller, string $action): array
-{
-        error_log('🔍 GuestMiddleware::class = ' . GuestMiddleware::class);
-    error_log('🔍 AuthMiddleware::class = ' . AuthMiddleware::class);
-    error_log('🔍 LoggerMiddleware::class = ' . LoggerMiddleware::class);
-    $middlewares = [LoggerMiddleware::class];  // ← полный путь
 
-    $controllerMiddlewares = $controller->getMiddlewareForAction($action);
+    private function getMiddlewareForRoute(Controller $controller, string $action): array
+    {
+        $middlewares = [LoggerMiddleware::class];
 
-    if (empty($controllerMiddlewares)) {
-        $controllerName = get_class($controller);
-        $controllerName = basename(str_replace('\\', '/', $controllerName));
+        $controllerMiddlewares = $controller->getMiddlewareForAction($action);
 
-        if ($controllerName === 'LogoutController') {
+        if (empty($controllerMiddlewares)) {
+            $controllerName = get_class($controller);
+            $controllerName = basename(str_replace('\\', '/', $controllerName));
+
+            if ($controllerName === 'LogoutController') {
+                return $middlewares;
+            }
+
+            $guestRoutes = [
+                'LoginController' => ['index', 'store'],
+                'RegisterController' => ['index', 'store'],
+            ];
+
+            if (isset($guestRoutes[$controllerName]) && in_array($action, $guestRoutes[$controllerName])) {
+                $middlewares[] = GuestMiddleware::class;
+                return $middlewares;
+            }
+
+            $middlewares[] = AuthMiddleware::class;
             return $middlewares;
         }
 
-        $guestRoutes = [
-            'LoginController' => ['index', 'store'],
-            'RegisterController' => ['index', 'store'],
-        ];
-
-        if (isset($guestRoutes[$controllerName]) && in_array($action, $guestRoutes[$controllerName])) {
-            $middlewares[] = GuestMiddleware::class;
-            return $middlewares;
-        }
-
-        $middlewares[] = AuthMiddleware::class;
-        return $middlewares;
+        return array_merge($middlewares, $controllerMiddlewares);
     }
-
-    return array_merge($middlewares, $controllerMiddlewares);
-}
 
     private function notFound(): void
     {

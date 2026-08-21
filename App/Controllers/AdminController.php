@@ -72,4 +72,8 @@ class AdminController extends Controller
         }
         $this->redirect('/admin/comments');
     }
+    public function index(Request $request): void
+    {
+        $this->redirect('/admin/comments');
+    }
 }
